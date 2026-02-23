@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impositor de PDF para Encuadernación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <div class="max-w-4xl mx-auto py-12 px-4">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-slate-800 mb-2">Impositor de Libros</h1>
+            <p class="text-slate-600">Prepara tus PDFs para encuadernación por cuadernillos.</p>
+        </header>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <!-- Configuración -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Páginas por cuadernillo</label>
+                    <input type="number" id="pageSize" value="32" min="4" step="4" 
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <p class="text-xs text-slate-500 mt-1">Debe ser múltiplo de 4 (ej: 8, 16, 32).</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Archivo PDF</label>
+                    <div id="dropZone" class="drop-zone rounded-lg p-4 text-center cursor-pointer bg-slate-50">
+                        <span id="fileName" class="text-slate-500">Haz clic o arrastra tu PDF aquí</span>
+                        <input type="file" id="fileInput" accept="application/pdf" class="hidden">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    Procesar y Descargar Archivos
+                </button>
+            </div>
+
+            <!-- Estado -->
+            <div id="status" class="mt-8 hidden">
+                <div class="w-full bg-slate-200 rounded-full h-2.5 mb-2">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="statusText" class="text-sm text-center text-slate-600 font-medium"></p>
+            </div>
+
+            <!-- Lista de descargas -->
+            <div id="downloadList" class="mt-8 space-y-2"></div>
+        </div>
+
+        <section class="mt-12 bg-blue-50 border border-blue-100 rounded-xl p-6">
+            <h2 class="text-lg font-semibold text-blue-800 mb-2">¿Cómo funciona?</h2>
+            <ul class="list-disc list-inside text-blue-700 space-y-1 text-sm">
+                <li>La aplicación divide el PDF en grupos según el tamaño elegido (ej. 32 páginas).</li>
+                <li>Genera dos archivos por grupo: <strong>Superior</strong> (caras frontales) y <strong>Anverso</strong> (caras traseras).</li>
+                <li>Cada página del nuevo PDF contiene 2 páginas del original una al lado de la otra (A4 horizontal para folios A5, por ejemplo).</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        const { PDFDocument } = PDFLib;
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameLabel = document.getElementById('fileName');
+        const processBtn = document.getElementById('processBtn');
+        const statusDiv = document.getElementById('status');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const downloadList = document.getElementById('downloadList');
+
+        let selectedFile = null;
+
+        // Eventos de Archivo
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                fileNameLabel.textContent = selectedFile.name;
+            }
+        };
+
+        // Arrastrar y soltar
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('active'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('active');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if (e.dataTransfer.files.length > 0) {
+                selectedFile = e.dataTransfer.files[0];
+                fileNameLabel.textContent = selectedFile.name;
+            }
+        };
+
+        async function createImposedPDF(originalPdfDoc, pagesIndices, title) {
+            const newPdf = await PDFDocument.create();
+            
+            for (let i = 0; i < pagesIndices.length; i += 2) {
+                // Cada "página" del nuevo PDF tendrá 2 páginas del original
+                const [width, height] = [595.28 * 2, 841.89]; // Doble A4 (A3) o similar, ajustable
+                const page = newPdf.addPage([width, height]);
+
+                const leftIdx = pagesIndices[i];
+                const rightIdx = pagesIndices[i+1];
+
+                // Copiar páginas
+                const [leftPage] = leftIdx !== null ? await newPdf.copyPages(originalPdfDoc, [leftIdx]) : [null];
+                const [rightPage] = rightIdx !== null ? await newPdf.copyPages(originalPdfDoc, [rightIdx]) : [null];
+
+                if (leftPage) {
+                    const embeddedLeft = await newPdf.embedPage(leftPage);
+                    page.drawPage(embeddedLeft, {
+                        x: 0,
+                        y: 0,
+                        width: width / 2,
+                        height: height,
+                    });
+                }
+
+                if (rightPage) {
+                    const embeddedRight = await newPdf.embedPage(rightPage);
+                    page.drawPage(embeddedRight, {
+                        x: width / 2,
+                        y: 0,
+                        width: width / 2,
+                        height: height,
+                    });
+                }
+            }
+
+            const pdfBytes = await newPdf.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            return blob;
+        }
+
+        processBtn.onclick = async () => {
+            if (!selectedFile) return alert("Por favor selecciona un archivo PDF");
+            
+            const signatureSize = parseInt(document.getElementById('pageSize').value);
+            if (signatureSize % 4 !== 0) return alert("El tamaño del cuadernillo debe ser múltiplo de 4");
+
+            processBtn.disabled = true;
+            statusDiv.classList.remove('hidden');
+            downloadList.innerHTML = '';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                const totalPages = pdfDoc.getPageCount();
+                
+                // Calcular cuántos cuadernillos necesitamos
+                const numSignatures = Math.ceil(totalPages / signatureSize);
+                
+                for (let s = 0; s < numSignatures; s++) {
+                    const startPage = s * signatureSize;
+                    const endPage = Math.min(startPage + signatureSize, totalPages);
+                    const currentSigPages = signatureSize; // Siempre rellenamos a múltiplo de 4 para la imposición
+
+                    let superiorPages = [];
+                    let anversoPages = [];
+
+                    // Lógica de imposición tipo libro
+                    // Para cada hoja de papel (4 páginas: 2 delante, 2 detrás)
+                    for (let i = 0; i < currentSigPages / 4; i++) {
+                        const low = i * 2;
+                        const high = currentSigPages - 1 - (i * 2);
+
+                        // Superior: [Última, Primera] -> [32, 1], [30, 3]...
+                        const getIdx = (offset) => {
+                            const idx = startPage + offset;
+                            return idx < totalPages ? idx : null;
+                        };
+
+                        // Caras Superiores (Recto)
+                        superiorPages.push(getIdx(high));     // Izquierda
+                        superiorPages.push(getIdx(low));      // Derecha
+
+                        // Caras Anversos/Reversos (Verso)
+                        anversoPages.push(getIdx(low + 1));   // Izquierda
+                        anversoPages.push(getIdx(high - 1));  // Derecha
+                    }
+
+                    // Generar PDFs
+                    const blobSup = await createImposedPDF(pdfDoc, superiorPages);
+                    const blobAnv = await createImposedPDF(pdfDoc, anversoPages);
+
+                    addDownloadLink(`libro-${startPage + 1}-${startPage + signatureSize}-Superior.pdf`, blobSup);
+                    addDownloadLink(`libro-${startPage + 1}-${startPage + signatureSize}-Anverso.pdf`, blobAnv);
+
+                    const progress = ((s + 1) / numSignatures) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    statusText.textContent = `Procesando cuadernillo ${s + 1} de ${numSignatures}...`;
+                }
+
+                statusText.textContent = "¡Proceso completado! Descarga tus archivos abajo.";
+
+            } catch (err) {
+                console.error(err);
+                statusText.textContent = "Error procesando el PDF.";
+            } finally {
+                processBtn.disabled = false;
+            }
+        };
+
+        function addDownloadLink(name, blob) {
+            const url = URL.createObjectURL(blob);
+            const div = document.createElement('div');
+            div.className = "flex items-center justify-between bg-white border border-slate-200 p-3 rounded-lg hover:bg-slate-50 transition-colors";
+            div.innerHTML = `
+                <span class="text-sm font-medium text-slate-700">${name}</span>
+                <a href="${url}" download="${name}" class="text-blue-600 text-sm font-bold hover:underline">Descargar</a>
+            `;
+            downloadList.appendChild(div);
+        }
+    </script>
+</body>
+</html>
