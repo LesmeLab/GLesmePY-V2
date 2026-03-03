@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creador de Cuadernillos PDF - Formato Oficio</title>
+    <!-- React y ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel para JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF-lib para manipulación de PDFs -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- JSZip para crear la carpeta comprimida -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver para descargar el ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { PDFDocument } = PDFLib;
+
+        // Factor de conversión de centímetros a puntos
+        const CM_TO_PTS = 72 / 2.54;
+
+        function App() {
+            const [file, setFile] = useState(null);
+            const [fileName, setFileName] = useState("");
+            const [totalPages, setTotalPages] = useState(0);
+            const [signatureSize, setSignatureSize] = useState(32);
+            const [spacing, setSpacing] = useState(40); // Espaciado en puntos
+            const [pageWidthCm, setPageWidthCm] = useState(35.56); // Ancho en cm (Por defecto Oficio)
+            const [pageHeightCm, setPageHeightCm] = useState(21.59); // Alto en cm (Por defecto Oficio)
+            const [preview, setPreview] = useState([]);
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [progressMsg, setProgressMsg] = useState("");
+            const [originalDocBytes, setOriginalDocBytes] = useState(null);
+
+            // Manejar la carga del archivo PDF
+            const handleFileUpload = async (e) => {
+                const selectedFile = e.target.files[0];
+                if (selectedFile && selectedFile.type === "application/pdf") {
+                    setFile(selectedFile);
+                    setFileName(selectedFile.name);
+                    
+                    const arrayBuffer = await selectedFile.arrayBuffer();
+                    setOriginalDocBytes(arrayBuffer);
+                    
+                    const pdfDoc = await PDFDocument.load(arrayBuffer);
+                    setTotalPages(pdfDoc.getPageCount());
+                } else {
+                    alert("Por favor, sube un archivo PDF válido.");
+                }
+            };
+
+            // Generar vista previa
+            useEffect(() => {
+                if (totalPages > 0 && signatureSize > 0 && signatureSize % 4 === 0) {
+                    let paddedPages = totalPages;
+                    while (paddedPages % 4 !== 0) paddedPages++;
+
+                    const previewData = [];
+                    const k = Math.min(signatureSize, paddedPages); 
+                    const sheets = k / 4;
+
+                    for (let sheet = 0; sheet < sheets; sheet++) {
+                        const supL = k - 2 * sheet;
+                        const supR = 1 + 2 * sheet;
+                        const anvL = 2 + 2 * sheet;
+                        const anvR = k - 2 * sheet - 1;
+                        previewData.push({
+                            hoja: sheet + 1,
+                            sup: `${supL > totalPages ? '[Blanco]' : supL} | ${supR > totalPages ? '[Blanco]' : supR}`,
+                            anv: `${anvL > totalPages ? '[Blanco]' : anvL} | ${anvR > totalPages ? '[Blanco]' : anvR}`
+                        });
+                    }
+                    setPreview(previewData);
+                } else {
+                    setPreview([]);
+                }
+            }, [totalPages, signatureSize]);
+
+            // Función de ayuda para calcular la escala para ajustar la página en una caja
+            const calculateScaleAndPos = (pageWidth, pageHeight, boxX, boxY, boxWidth, boxHeight) => {
+                const scaleX = boxWidth / pageWidth;
+                const scaleY = boxHeight / pageHeight;
+                const scale = Math.min(scaleX, scaleY); // Ajustar sin distorsionar
+
+                const scaledWidth = pageWidth * scale;
+                const scaledHeight = pageHeight * scale;
+
+                // Centrar dentro de la caja
+                const x = boxX + (boxWidth - scaledWidth) / 2;
+                const y = boxY + (boxHeight - scaledHeight) / 2;
+
+                return { scale, x, y, width: scaledWidth, height: scaledHeight };
+            };
+
+            // Lógica principal
+            const processPDF = async () => {
+                if (!originalDocBytes || signatureSize % 4 !== 0) return;
+                
+                // Convertir dimensiones de centímetros a puntos
+                const finalWidthPts = pageWidthCm * CM_TO_PTS;
+                const finalHeightPts = pageHeightCm * CM_TO_PTS;
+
+                setIsProcessing(true);
+                try {
+                    setProgressMsg("Cargando y preparando el PDF...");
+                    const pdfDoc = await PDFDocument.load(originalDocBytes);
+                    let pageCount = pdfDoc.getPageCount();
+
+                    // Rellenar páginas en blanco si no es múltiplo de 4
+                    while (pageCount % 4 !== 0) {
+                        pdfDoc.addPage([500, 700]); // El tamaño no importa mucho aquí, se escalará
+                        pageCount = pdfDoc.getPageCount();
+                    }
+
+                    const zip = new JSZip();
+                    const folderName = fileName.replace(".pdf", "") + "_Cuadernillos_Personalizado";
+                    const folder = zip.folder(folderName);
+
+                    let startPage = 0; 
+                    let partNum = 1;
+
+                    // Cálculos de las cajas contenedoras para la hoja
+                    const margin = spacing;
+                    const halfWidth = finalWidthPts / 2;
+                    
+                    // Dimensiones y posiciones de las áreas útiles (descontando espaciado)
+                    const leftBoxX = margin;
+                    const leftBoxY = margin;
+                    const leftBoxW = halfWidth - (margin * 1.5);
+                    const leftBoxH = finalHeightPts - (margin * 2);
+
+                    const rightBoxX = halfWidth + (margin * 0.5);
+                    const rightBoxY = margin;
+                    const rightBoxW = halfWidth - (margin * 1.5);
+                    const rightBoxH = finalHeightPts - (margin * 2);
+
+                    while (startPage < pageCount) {
+                        let k = signatureSize;
+                        if (startPage + k > pageCount) {
+                            k = pageCount - startPage;
+                        }
+
+                        setProgressMsg(`Procesando cuadernillo ${partNum} (Páginas ${startPage + 1} a ${startPage + k})...`);
+
+                        const docSup = await PDFDocument.create();
+                        const docAnv = await PDFDocument.create();
+
+                        const sheets = k / 4;
+
+                        for (let sheet = 0; sheet < sheets; sheet++) {
+                            const supLeftIdx = startPage + k - 1 - 2 * sheet;
+                            const supRightIdx = startPage + 2 * sheet;
+                            const anvLeftIdx = startPage + 2 * sheet + 1;
+                            const anvRightIdx = startPage + k - 1 - 2 * sheet - 1;
+
+                            const pgSupL = pdfDoc.getPage(supLeftIdx);
+                            const pgSupR = pdfDoc.getPage(supRightIdx);
+                            const pgAnvL = pdfDoc.getPage(anvLeftIdx);
+                            const pgAnvR = pdfDoc.getPage(anvRightIdx);
+
+                            // --- Hoja Superior ---
+                            const [embSupL, embSupR] = await docSup.embedPages([pgSupL, pgSupR]);
+                            const pageSup = docSup.addPage([finalWidthPts, finalHeightPts]); // Fijar tamaño personalizado
+
+                            // Posicionar Izquierda
+                            const posSupL = calculateScaleAndPos(embSupL.width, embSupL.height, leftBoxX, leftBoxY, leftBoxW, leftBoxH);
+                            pageSup.drawPage(embSupL, { ...posSupL });
+
+                            // Posicionar Derecha
+                            const posSupR = calculateScaleAndPos(embSupR.width, embSupR.height, rightBoxX, rightBoxY, rightBoxW, rightBoxH);
+                            pageSup.drawPage(embSupR, { ...posSupR });
+
+
+                            // --- Hoja Anverso ---
+                            const [embAnvL, embAnvR] = await docAnv.embedPages([pgAnvL, pgAnvR]);
+                            const pageAnv = docAnv.addPage([finalWidthPts, finalHeightPts]); // Fijar tamaño personalizado
+
+                            // Posicionar Izquierda
+                            const posAnvL = calculateScaleAndPos(embAnvL.width, embAnvL.height, leftBoxX, leftBoxY, leftBoxW, leftBoxH);
+                            pageAnv.drawPage(embAnvL, { ...posAnvL });
+
+                            // Posicionar Derecha
+                            const posAnvR = calculateScaleAndPos(embAnvR.width, embAnvR.height, rightBoxX, rightBoxY, rightBoxW, rightBoxH);
+                            pageAnv.drawPage(embAnvR, { ...posAnvR });
+                        }
+
+                        const supBytes = await docSup.save();
+                        const anvBytes = await docAnv.save();
+
+                        const S = startPage + 1;
+                        const E = startPage + k;
+                        
+                        folder.file(`libro-${S}-${E}-Superior.pdf`, supBytes);
+                        folder.file(`libro-${S}-${E}-Anverso.pdf`, anvBytes);
+
+                        startPage += k;
+                        partNum++;
+                    }
+
+                    setProgressMsg("Comprimiendo archivos en ZIP...");
+                    const zipBlob = await zip.generateAsync({ type: "blob" });
+                    
+                    setProgressMsg("¡Descargando!");
+                    saveAs(zipBlob, `${folderName}.zip`);
+
+                    setTimeout(() => setProgressMsg(""), 3000); 
+
+                } catch (error) {
+                    console.error("Error procesando PDF:", error);
+                    alert("Ocurrió un error al procesar el archivo. Revisa la consola para más detalles.");
+                    setProgressMsg("");
+                }
+                setIsProcessing(false);
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto p-6 font-sans">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
+                            <i className="fa-solid fa-file-invoice mr-3"></i>
+                            Imposición para Encuadernar (Tamaño Personalizado)
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Prepara tus documentos configurando el tamaño final de la hoja en centímetros.
+                        </p>
+                    </header>
+
+                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-8 border-t-4 border-indigo-500">
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            
+                            {/* Subida de archivo */}
+                            <div className="flex flex-col">
+                                <label className="font-semibold mb-2 flex items-center">
+                                    <i className="fa-solid fa-file-pdf mr-2 text-red-500"></i>
+                                    Sube tu PDF original
+                                </label>
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
+                                        <i className="fa-solid fa-cloud-arrow-up text-3xl mb-2 text-slate-400"></i>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 px-2">
+                                            {fileName ? <span className="font-bold text-indigo-500 truncate block max-w-xs">{fileName}</span> : "Haz clic o arrastra aquí"}
+                                        </p>
+                                        {totalPages > 0 && <p className="text-xs text-slate-400 mt-1">({totalPages} páginas detectadas)</p>}
+                                    </div>
+                                    <input type="file" className="hidden" accept="application/pdf" onChange={handleFileUpload} />
+                                </label>
+                            </div>
+
+                            {/* Configuración */}
+                            <div className="flex flex-col justify-center space-y-4">
+                                <div>
+                                    <label className="font-semibold mb-1 flex items-center">
+                                        <i className="fa-solid fa-expand mr-2 text-blue-500"></i>
+                                        Tamaño de Hoja Final (cm)
+                                    </label>
+                                    <div className="flex space-x-2">
+                                        <div className="w-1/2">
+                                            <span className="text-xs text-slate-500">Ancho (Horizontal)</span>
+                                            <input 
+                                                type="number" 
+                                                className="border-2 border-slate-300 dark:border-slate-600 dark:bg-slate-700 rounded-lg p-2 w-full text-md focus:outline-none focus:border-indigo-500 transition"
+                                                value={pageWidthCm}
+                                                onChange={(e) => setPageWidthCm(parseFloat(e.target.value) || 0)}
+                                                step="0.1"
+                                                min="10"
+                                            />
+                                        </div>
+                                        <div className="w-1/2">
+                                            <span className="text-xs text-slate-500">Alto (Vertical)</span>
+                                            <input 
+                                                type="number" 
+                                                className="border-2 border-slate-300 dark:border-slate-600 dark:bg-slate-700 rounded-lg p-2 w-full text-md focus:outline-none focus:border-indigo-500 transition"
+                                                value={pageHeightCm}
+                                                onChange={(e) => setPageHeightCm(parseFloat(e.target.value) || 0)}
+                                                step="0.1"
+                                                min="10"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="font-semibold mb-1 flex items-center">
+                                        <i className="fa-solid fa-layer-group mr-2 text-green-500"></i>
+                                        Páginas por Cuadernillo
+                                    </label>
+                                    <input 
+                                        type="number" 
+                                        className="border-2 border-slate-300 dark:border-slate-600 dark:bg-slate-700 rounded-lg p-2 w-full text-md focus:outline-none focus:border-indigo-500 transition"
+                                        value={signatureSize}
+                                        onChange={(e) => setSignatureSize(parseInt(e.target.value) || 0)}
+                                        step="4"
+                                        min="4"
+                                    />
+                                    {signatureSize % 4 !== 0 && (
+                                        <p className="text-xs text-red-500 mt-1 font-bold">Debe ser múltiplo de 4.</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="font-semibold mb-1 flex items-center justify-between">
+                                        <span>
+                                            <i className="fa-solid fa-ruler-combined mr-2 text-orange-500"></i>
+                                            Espaciado y Márgenes
+                                        </span>
+                                        <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded dark:bg-orange-900 dark:text-orange-200">
+                                            {spacing} pts
+                                        </span>
+                                    </label>
+                                    <input 
+                                        type="range" 
+                                        min="0" max="100" step="5"
+                                        value={spacing}
+                                        onChange={(e) => setSpacing(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-indigo-600 mt-2"
+                                    />
+                                    <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                        <span>Sin margen</span>
+                                        <span>Muy espaciado</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Visualizador de Configuración */}
+                        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 mb-6 border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between">
+                            <div className="text-sm">
+                                <span className="font-bold">Tamaño Final de Hoja:</span> Personalizado<br/>
+                                <span className="text-slate-500 text-xs">{pageWidthCm} x {pageHeightCm} cm</span>
+                            </div>
+                            <div className="flex space-x-2 mt-4 md:mt-0">
+                                <div className="w-16 h-10 border-2 border-indigo-300 bg-white flex items-center justify-center text-xs text-indigo-300">Pág. Izq</div>
+                                <div className="w-16 h-10 border-2 border-indigo-300 bg-white flex items-center justify-center text-xs text-indigo-300">Pág. Der</div>
+                            </div>
+                        </div>
+
+                        {/* Botón de Procesamiento */}
+                        <div className="text-center">
+                            <button 
+                                onClick={processPDF}
+                                disabled={!file || signatureSize % 4 !== 0 || isProcessing}
+                                className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all ${
+                                    (!file || signatureSize % 4 !== 0 || isProcessing) 
+                                    ? 'bg-slate-400 cursor-not-allowed' 
+                                    : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg transform hover:-translate-y-1'
+                                }`}
+                            >
+                                {isProcessing ? (
+                                    <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> Procesando...</span>
+                                ) : (
+                                    <span><i className="fa-solid fa-file-zipper mr-2"></i> Generar PDFs en ZIP</span>
+                                )}
+                            </button>
+                            
+                            {progressMsg && (
+                                <p className="mt-3 text-indigo-600 dark:text-indigo-400 font-semibold animate-pulse">
+                                    {progressMsg}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Vista Previa de la Secuencia */}
+                    {preview.length > 0 && (
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
+                            <h2 className="text-xl font-bold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
+                                Vista Previa del Primer Cuadernillo
+                            </h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-100 dark:bg-slate-700">
+                                            <th className="p-3 border-b dark:border-slate-600">Hoja Física</th>
+                                            <th className="p-3 border-b dark:border-slate-600 text-indigo-600 dark:text-indigo-400"><i className="fa-regular fa-file-pdf mr-1"></i> Frente (Superior)</th>
+                                            <th className="p-3 border-b dark:border-slate-600 text-emerald-600 dark:text-emerald-400"><i className="fa-regular fa-file-pdf mr-1"></i> Atrás (Anverso)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {preview.map((row, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700">
+                                                <td className="p-3 font-semibold">Hoja {row.hoja}</td>
+                                                <td className="p-3 tracking-widest font-mono bg-indigo-50/50 dark:bg-indigo-900/20">{row.sup}</td>
+                                                <td className="p-3 tracking-widest font-mono bg-emerald-50/50 dark:bg-emerald-900/20">{row.anv}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

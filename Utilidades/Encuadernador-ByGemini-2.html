@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impositor de PDF para Encuadernación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <div class="max-w-4xl mx-auto py-12 px-4">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-slate-800 mb-2">Impositor de Libros</h1>
+            <p class="text-slate-600">Prepara tus PDFs para encuadernación por cuadernillos.</p>
+        </header>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Páginas por cuadernillo</label>
+                    <input type="number" id="pageSize" value="32" min="4" step="4" 
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <p class="text-xs text-slate-500 mt-1">Debe ser múltiplo de 4 (ej: 8, 16, 32).</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Archivo PDF</label>
+                    <div id="dropZone" class="drop-zone rounded-lg p-4 text-center cursor-pointer bg-slate-50">
+                        <span id="fileName" class="text-slate-500">Haz clic o arrastra tu PDF aquí</span>
+                        <input type="file" id="fileInput" accept="application/pdf" class="hidden">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    Procesar y Descargar Archivos
+                </button>
+            </div>
+
+            <div id="status" class="mt-8 hidden">
+                <div class="w-full bg-slate-200 rounded-full h-2.5 mb-2">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="statusText" class="text-sm text-center text-slate-600 font-medium"></p>
+            </div>
+
+            <div id="downloadList" class="mt-8 space-y-2"></div>
+        </div>
+
+        <section class="mt-12 bg-blue-50 border border-blue-100 rounded-xl p-6">
+            <h2 class="text-lg font-semibold text-blue-800 mb-2">¿Cómo funciona?</h2>
+            <ul class="list-disc list-inside text-blue-700 space-y-1 text-sm">
+                <li>Genera cuadernillos en hoja de <strong>33 cm de ancho x 21.59 cm de alto</strong>.</li>
+                <li>Las páginas se empujan hacia los bordes exteriores dejando <strong>1 cm exacto de margen</strong>.</li>
+                <li>El espacio sobrante se acumula en el medio para facilitar la encuadernación.</li>
+                <li><strong>Aviso de impresión:</strong> Recuerda imprimir en modo <strong>"Tamaño real" o "Escala 100%"</strong> para que tu impresora no añada márgenes extra.</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        const { PDFDocument } = PDFLib;
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameLabel = document.getElementById('fileName');
+        const processBtn = document.getElementById('processBtn');
+        const statusDiv = document.getElementById('status');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const downloadList = document.getElementById('downloadList');
+
+        let selectedFile = null;
+
+        // Factor de conversión de centímetros a puntos PDF
+        const CM_TO_PT = 28.3465;
+
+        // Eventos de Archivo
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                fileNameLabel.textContent = selectedFile.name;
+            }
+        };
+
+        // Arrastrar y soltar
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('active'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('active');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if (e.dataTransfer.files.length > 0) {
+                selectedFile = e.dataTransfer.files[0];
+                fileNameLabel.textContent = selectedFile.name;
+            }
+        };
+
+        async function createImposedPDF(originalPdfDoc, pagesIndices, title) {
+            const newPdf = await PDFDocument.create();
+            
+            // 1 cm = 28.3465 puntos
+            const margin = 1 * CM_TO_PT; 
+            
+            // Hoja apaisada (Landscape): 33 cm de ancho x 21.59 cm de alto
+            const sheetWidthCM = 33;
+            const sheetHeightCM = 21.59;
+            const width = sheetWidthCM * CM_TO_PT;
+            const height = sheetHeightCM * CM_TO_PT;
+            
+            // Espacio máximo permitido para una página individual
+            // Exigimos 1cm por fuera. El espacio interno lo dicta la mitad de la hoja.
+            const maxPageWidth = (width / 2) - margin; 
+            const maxPageHeight = height - (margin * 2);
+
+            for (let i = 0; i < pagesIndices.length; i += 2) {
+                const page = newPdf.addPage([width, height]);
+
+                const leftIdx = pagesIndices[i];
+                const rightIdx = pagesIndices[i+1];
+
+                const [leftPage] = leftIdx !== null ? await newPdf.copyPages(originalPdfDoc, [leftIdx]) : [null];
+                const [rightPage] = rightIdx !== null ? await newPdf.copyPages(originalPdfDoc, [rightIdx]) : [null];
+
+                if (leftPage) {
+                    const embeddedLeft = await newPdf.embedPage(leftPage);
+                    
+                    // Calculamos la proporción para no deformar la imagen
+                    const scaleFactor = Math.min(maxPageWidth / embeddedLeft.width, maxPageHeight / embeddedLeft.height);
+                    const scaledWidth = embeddedLeft.width * scaleFactor;
+                    const scaledHeight = embeddedLeft.height * scaleFactor;
+
+                    page.drawPage(embeddedLeft, {
+                        x: margin, // Pegado 100% al margen exterior izquierdo
+                        y: (height - scaledHeight) / 2, // Centrado verticalmente
+                        width: scaledWidth,
+                        height: scaledHeight,
+                    });
+                }
+
+                if (rightPage) {
+                    const embeddedRight = await newPdf.embedPage(rightPage);
+                    
+                    // Calculamos la proporción para no deformar la imagen
+                    const scaleFactor = Math.min(maxPageWidth / embeddedRight.width, maxPageHeight / embeddedRight.height);
+                    const scaledWidth = embeddedRight.width * scaleFactor;
+                    const scaledHeight = embeddedRight.height * scaleFactor;
+
+                    page.drawPage(embeddedRight, {
+                        x: width - margin - scaledWidth, // Empujado 100% al margen exterior derecho
+                        y: (height - scaledHeight) / 2, // Centrado verticalmente
+                        width: scaledWidth,
+                        height: scaledHeight,
+                    });
+                }
+            }
+
+            const pdfBytes = await newPdf.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            return blob;
+        }
+
+        processBtn.onclick = async () => {
+            if (!selectedFile) return alert("Por favor selecciona un archivo PDF");
+            
+            const signatureSize = parseInt(document.getElementById('pageSize').value);
+            if (signatureSize % 4 !== 0) return alert("El tamaño del cuadernillo debe ser múltiplo de 4");
+
+            processBtn.disabled = true;
+            statusDiv.classList.remove('hidden');
+            downloadList.innerHTML = '';
+            
+            try {
+                const arrayBuffer = await selectedFile.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                const totalPages = pdfDoc.getPageCount();
+                
+                const numSignatures = Math.ceil(totalPages / signatureSize);
+                
+                for (let s = 0; s < numSignatures; s++) {
+                    const startPage = s * signatureSize;
+                    const endPage = Math.min(startPage + signatureSize, totalPages);
+                    const currentSigPages = signatureSize; 
+
+                    let superiorPages = [];
+                    let anversoPages = [];
+
+                    for (let i = 0; i < currentSigPages / 4; i++) {
+                        const low = i * 2;
+                        const high = currentSigPages - 1 - (i * 2);
+
+                        const getIdx = (offset) => {
+                            const idx = startPage + offset;
+                            return idx < totalPages ? idx : null;
+                        };
+
+                        superiorPages.push(getIdx(high));     
+                        superiorPages.push(getIdx(low));      
+
+                        anversoPages.push(getIdx(low + 1));   
+                        anversoPages.push(getIdx(high - 1));  
+                    }
+
+                    const blobSup = await createImposedPDF(pdfDoc, superiorPages);
+                    const blobAnv = await createImposedPDF(pdfDoc, anversoPages);
+
+                    addDownloadLink(`libro-${startPage + 1}-${startPage + signatureSize}-Superior.pdf`, blobSup);
+                    addDownloadLink(`libro-${startPage + 1}-${startPage + signatureSize}-Anverso.pdf`, blobAnv);
+
+                    const progress = ((s + 1) / numSignatures) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    statusText.textContent = `Procesando cuadernillo ${s + 1} de ${numSignatures}...`;
+                }
+
+                statusText.textContent = "¡Proceso completado! Descarga tus archivos abajo.";
+
+            } catch (err) {
+                console.error(err);
+                statusText.textContent = "Error procesando el PDF.";
+            } finally {
+                processBtn.disabled = false;
+            }
+        };
+
+        function addDownloadLink(name, blob) {
+            const url = URL.createObjectURL(blob);
+            const div = document.createElement('div');
+            div.className = "flex items-center justify-between bg-white border border-slate-200 p-3 rounded-lg hover:bg-slate-50 transition-colors";
+            div.innerHTML = `
+                <span class="text-sm font-medium text-slate-700">${name}</span>
+                <a href="${url}" download="${name}" class="text-blue-600 text-sm font-bold hover:underline">Descargar</a>
+            `;
+            downloadList.appendChild(div);
+        }
+    </script>
+</body>
+</html>
