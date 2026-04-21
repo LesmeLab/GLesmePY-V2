@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Simulacros de Examen</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F3F4F6;
+            --surface: #FFFFFF;
+            --text: #1F2937;
+            --border: #D1D5DB;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        input[type="file"], select, input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .row {
+            display: flex;
+            gap: 1rem;
+        }
+        .row .form-group {
+            flex: 1;
+        }
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        button:disabled {
+            background-color: #9CA3AF;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #059669;
+            font-weight: bold;
+        }
+        #error {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #DC2626;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        .info-text {
+            font-size: 0.8rem;
+            color: #6B7280;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 Generador de Simulacros</h1>
+
+    <div class="form-group">
+        <label for="folderInput">Selecciona la carpeta con las imágenes</label>
+        <input type="file" id="folderInput" webkitdirectory directory multiple>
+        <div class="info-text">Formato estricto: Materia_Momento_Prioridad_Tipo_Fecha.ext</div>
+    </div>
+
+    <div id="filtersPanel" class="hidden">
+        <div class="form-group">
+            <label for="materiaSelect">Materia</label>
+            <select id="materiaSelect">
+                <option value="">Selecciona una materia...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="momentoSelect">Momento de Examen</label>
+            <select id="momentoSelect" disabled>
+                <option value="">Selecciona la materia primero...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="totalEjercicios">Cantidad total de ejercicios a generar</label>
+            <input type="number" id="totalEjercicios" min="1" value="5">
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label for="porcentajeTeoria">% Teoría</label>
+                <input type="number" id="porcentajeTeoria" min="0" max="100" value="50">
+            </div>
+            <div class="form-group">
+                <label for="porcentajePractica">% Práctica</label>
+                <input type="number" id="porcentajePractica" min="0" max="100" value="50" readonly>
+                <div class="info-text">Se calcula automáticamente</div>
+            </div>
+        </div>
+
+        <button id="generateBtn">Generar Aleatorización y Descargar PDF</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="error"></div>
+</div>
+
+<script>
+    // --- Variables Globales ---
+    let archivosValidos = [];
+    const diccionarioMomentos = {
+        'PP': 'Primer Parcial',
+        'SP': 'Segundo Parcial',
+        'PF': 'Primer Final',
+        'SF': 'Segundo Final'
+    };
+
+    // --- Elementos del DOM ---
+    const folderInput = document.getElementById('folderInput');
+    const filtersPanel = document.getElementById('filtersPanel');
+    const materiaSelect = document.getElementById('materiaSelect');
+    const momentoSelect = document.getElementById('momentoSelect');
+    const porcentajeTeoria = document.getElementById('porcentajeTeoria');
+    const porcentajePractica = document.getElementById('porcentajePractica');
+    const totalEjercicios = document.getElementById('totalEjercicios');
+    const generateBtn = document.getElementById('generateBtn');
+    const statusDiv = document.getElementById('status');
+    const errorDiv = document.getElementById('error');
+
+    // --- Lógica de Interfaz ---
+
+    // Ajuste automático de porcentajes (Deben sumar 100)
+    porcentajeTeoria.addEventListener('input', (e) => {
+        let val = parseInt(e.target.value) || 0;
+        if (val > 100) val = 100;
+        if (val < 0) val = 0;
+        e.target.value = val;
+        porcentajePractica.value = 100 - val;
+    });
+
+    // Leer y clasificar archivos
+    folderInput.addEventListener('change', (e) => {
+        archivosValidos = [];
+        const files = e.target.files;
+        statusDiv.innerText = '';
+        errorDiv.innerText = '';
+        
+        // Expresión Regular para el formato estricto
+        // Materia(CamelCase)_Momento(2letras)_Prioridad(1-9)_Tipo(T|P)_Fecha(nums).ext
+        const regex = /^([A-Za-z0-9]+)_([A-Z]{2})_([1-9])_([TP])_(\d+)\.(jpg|jpeg|png)$/i;
+
+        for (let file of files) {
+            if (!file.type.startsWith('image/')) continue;
+            
+            const match = file.name.match(regex);
+            if (match) {
+                archivosValidos.push({
+                    file: file,
+                    materia: match[1],
+                    momento: match[2],
+                    prioridad: parseInt(match[3]),
+                    tipo: match[4].toUpperCase(),
+                    fecha: match[5]
+                });
+            }
+        }
+
+        if (archivosValidos.length > 0) {
+            filtersPanel.classList.remove('hidden');
+            actualizarMaterias();
+            statusDiv.innerText = `Se encontraron ${archivosValidos.length} imágenes válidas.`;
+        } else {
+            filtersPanel.classList.add('hidden');
+            errorDiv.innerText = 'No se encontraron imágenes con el formato requerido.';
+        }
+    });
+
+    // Actualizar Select de Materias
+    function actualizarMaterias() {
+        const materiasUnicas = [...new Set(archivosValidos.map(a => a.materia))];
+        materiaSelect.innerHTML = '<option value="">Selecciona una materia...</option>';
+        materiasUnicas.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m; // Se muestra en CamelCase tal cual
+            materiaSelect.appendChild(opt);
+        });
+        momentoSelect.innerHTML = '<option value="">Selecciona la materia primero...</option>';
+        momentoSelect.disabled = true;
+    }
+
+    // Actualizar Select de Momentos según la Materia
+    materiaSelect.addEventListener('change', (e) => {
+        const mat = e.target.value;
+        if (!mat) {
+            momentoSelect.innerHTML = '<option value="">Selecciona la materia primero...</option>';
+            momentoSelect.disabled = true;
+            return;
+        }
+
+        const archivosMateria = archivosValidos.filter(a => a.materia === mat);
+        const momentosUnicos = [...new Set(archivosMateria.map(a => a.momento))];
+        
+        momentoSelect.innerHTML = '<option value="">Selecciona un momento...</option>';
+        momentosUnicos.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = diccionarioMomentos[m] || m;
+            momentoSelect.appendChild(opt);
+        });
+        momentoSelect.disabled = false;
+    });
+
+    // --- Lógica Principal: Generación de PDF y Aleatorización ---
+
+    generateBtn.addEventListener('click', async () => {
+        const mat = materiaSelect.value;
+        const mom = momentoSelect.value;
+        const total = parseInt(totalEjercicios.value);
+        const pTeoria = parseInt(porcentajeTeoria.value);
+
+        if (!mat || !mom || !total) {
+            errorDiv.innerText = "Por favor, completa todos los campos.";
+            return;
+        }
+
+        errorDiv.innerText = '';
+        statusDiv.innerText = 'Generando examen, por favor espera...';
+        generateBtn.disabled = true;
+
+        try {
+            // 1. Filtrar los disponibles
+            const pool = archivosValidos.filter(a => a.materia === mat && a.momento === mom);
+            const poolTeorico = pool.filter(a => a.tipo === 'T');
+            const poolPractico = pool.filter(a => a.tipo === 'P');
+
+            // 2. Calcular cuotas
+            const metaTeorico = Math.round(total * (pTeoria / 100));
+            const metaPractico = total - metaTeorico;
+
+            // 3. Seleccionar ejercicios (Respetando prioridad y rellenando con P4 si falta)
+            const seleccionadosT = seleccionarEjercicios(poolTeorico, metaTeorico);
+            const seleccionadosP = seleccionarEjercicios(poolPractico, metaPractico);
+
+            let examenFinal = [...seleccionadosT, ...seleccionadosP];
+
+            // Si por alguna razón los pool estaban vacíos y no se pudo cumplir la cuota:
+            if (examenFinal.length === 0) {
+                throw new Error("No hay suficientes imágenes para generar el examen con esos parámetros.");
+            }
+
+            // 4. ORDENAR POR PRIORIDAD (1 primero, luego 2, etc.)
+            examenFinal.sort((a, b) => a.prioridad - b.prioridad);
+
+            // 5. Generar PDF
+            await construirPDF(examenFinal, mat, mom);
+
+            statusDiv.innerText = '¡PDF generado y descargado exitosamente!';
+        } catch (err) {
+            errorDiv.innerText = err.message;
+            statusDiv.innerText = '';
+        } finally {
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Función de selección con sesgo hacia prioridades altas (números bajos)
+    function seleccionarEjercicios(pool, cantidad) {
+        if (cantidad <= 0) return [];
+        if (pool.length <= cantidad) return [...pool]; // Si hay menos o exacto, los toma todos.
+
+        let seleccion = [];
+        // Separar en "cubetas" por prioridad, asumiendo prioridad del 1 al 4 (o agrupando >4 en la cubeta 4)
+        let cubetas = { 1: [], 2: [], 3: [], 4: [] };
+        
+        pool.forEach(img => {
+            let p = img.prioridad > 4 ? 4 : img.prioridad;
+            cubetas[p].push(img);
+        });
+
+        // Mezclar aleatoriamente dentro de cada cubeta
+        for (let i = 1; i <= 4; i++) {
+            cubetas[i].sort(() => Math.random() - 0.5);
+        }
+
+        // Sistema de distribución: Intenta sacar con este patrón para dar más peso a los de prioridad 1
+        // (1, 1, 2, 3, 4) - Si una cubeta se vacía, el código la salta.
+        let patronBusqueda = [1, 1, 2, 3, 4]; 
+        let index = 0;
+
+        while (seleccion.length < cantidad) {
+            let pActual = patronBusqueda[index % patronBusqueda.length];
+            
+            if (cubetas[pActual].length > 0) {
+                seleccion.push(cubetas[pActual].pop());
+            } else {
+                // Si la cubeta específica está vacía, buscamos en CUALQUIER otra que tenga archivos para rellenar
+                let encontro = false;
+                for (let i = 1; i <= 4; i++) {
+                    if (cubetas[i].length > 0) {
+                        seleccion.push(cubetas[i].pop());
+                        encontro = true;
+                        break;
+                    }
+                }
+                if (!encontro) break; // Ya no queda NADA en ninguna cubeta
+            }
+            index++;
+        }
+        return seleccion;
+    }
+
+    // --- Lógica de jsPDF y Canvas ---
+
+    async function construirPDF(listaEjercicios, materia, momento) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const marginX = 20;
+        const marginY = 20;
+        
+        // Área útil
+        const maxImgWidth = pageWidth - (marginX * 2);
+        const maxImgHeight = pageHeight * 0.40; // 40% del alto de la página
+
+        let cursorY = marginY;
+
+        // Título del PDF
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        const nombreMomento = diccionarioMomentos[momento] || momento;
+        const titulo = `Simulacro de Examen: ${materia} - ${nombreMomento}`;
+        doc.text(titulo, pageWidth/2, cursorY, { align: "center" });
+        cursorY += 15;
+
+        for (let i = 0; i < listaEjercicios.length; i++) {
+            const ej = listaEjercicios[i];
+            
+            // Leer imagen como Base64 mediante FileReader
+            const imgDataUrl = await leerArchivo(ej.file);
+            
+            // Cargar en un objeto Image nativo para obtener medidas originales
+            const imgObj = await cargarImagenParaMedir(imgDataUrl);
+
+            // Escalar manteniendo proporción
+            const pxToMm = 0.264583; // factor de conversión aproximado
+            let originalWidthMm = imgObj.width * pxToMm;
+            let originalHeightMm = imgObj.height * pxToMm;
+
+            let ratio = Math.min(
+                maxImgWidth / originalWidthMm,
+                maxImgHeight / originalHeightMm,
+                1 // No agrandar si la imagen es pequeña
+            );
+
+            let finalWidth = originalWidthMm * ratio;
+            let finalHeight = originalHeightMm * ratio;
+
+            // Verificar si cabe en la página actual, si no, crear nueva
+            if (cursorY + finalHeight > pageHeight - marginY) {
+                doc.addPage();
+                cursorY = marginY;
+            }
+
+            // Insertar la imagen en el PDF
+            doc.addImage(imgDataUrl, 'JPEG', marginX, cursorY, finalWidth, finalHeight);
+            
+            // Insertar la fecha en letra pequeñita debajo de la imagen
+            cursorY += finalHeight + 4;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+            doc.setTextColor(150, 150, 150); // Gris claro
+            doc.text(`Fecha orig: ${ej.fecha} | Prioridad: ${ej.prioridad}`, marginX, cursorY);
+            doc.setTextColor(0, 0, 0); // Restaurar color
+            
+            // Añadir espacio para la siguiente imagen
+            cursorY += 12; 
+        }
+
+        doc.save(`Simulacro_${materia}_${momento}.pdf`);
+    }
+
+    // Funciones Auxiliares para manejo de Archivos en Memoria
+    function leerArchivo(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function cargarImagenParaMedir(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = (e) => reject(e);
+            img.src = src;
+        });
+    }
+</script>
+</body>
+</html>
