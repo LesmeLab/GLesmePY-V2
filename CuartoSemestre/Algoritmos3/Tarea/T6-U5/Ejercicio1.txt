@@ -1,0 +1,39 @@
+
+  g37
+  Integrante:
+   Gustavo Emanuel Lesme Ortega       CIC: 5249373   Sección: TR
+  TP6-U5
+  
+  Ejercicio1
+
+  Declaración de honor 
+    • Yo Gustavo Emanuel Lesme Ortega
+    • No he discutido el código fuente de mi/nuestra tarea con ningún otro grupo, solo con el Profesor o el AER.
+    • No he usado código obtenido de otro estudiante o de cualquier otra fuente no autorizada, modificada o no modificada.
+    • Cualquier código o documentación utilizada en mi/nuestro programa obtenido de fuentes, tales como libros o notas de curso, 
+	   han sido claramente indicada en mi/nuestra tarea.
+---------------------------------------
+
+Afirmación del profesor:  
+Si un grafo G tiene un MST ya computado y se agrega un vértice v con 
+aristas e1, e2, ..., en (n ≥ 1), se puede actualizar el MST en tiempo O(1).
+
+
+Demostración / Contraejemplo:  
+La afirmación es falsa.  
+- Contraejemplo: Supongamos que agregamos un nuevo vértice v y lo conectamos 
+al grafo existente mediante n aristas (donde n > 1). 
+Al agregar estas aristas, se formarán ciclos con el MST existente. 
+Para restaurar las propiedades del MST, es necesario identificar la arista 
+de mayor peso en cada ciclo formado y eliminarla. Simplemente leer 
+las n aristas de entrada ya toma un tiempo de O(n), lo cual imposibilita 
+que el algoritmo se ejecute en O(1) (tiempo constante) cuando n crece.
+
+
+Coste real de actualización:  
+Si la afirmación no es correcta, el costo de actualizar el MST dependerá del enfoque:
+1. Si usamos Búsqueda en Profundidad (DFS) o Búsqueda a lo Ancho (BFS) desde 
+	el nuevo vértice para encontrar y romper los ciclos formados por 
+	las nuevas aristas, tomaría O(n · V) en el peor de los casos.  
+2. Si simplemente agregamos el vértice y las aristas al grafo y volvemos a 
+	ejecutar el algoritmo de Kruskal o Prim, el costo sería O(E log V).

@@ -1,0 +1,47 @@
+/*
+  g37
+  Integrante:
+   Gustavo Emanuel Lesme Ortega       CIC: 5249373   Sección: TR
+  TP5-U3
+  
+  Ejercicio3_itemA-C
+
+  Declaración de honor 
+    • Yo Gustavo Emanuel Lesme Ortega
+    • No he discutido el código fuente de mi/nuestra tarea con ningún otro grupo, solo con el Profesor o el AER.
+    • No he usado código obtenido de otro estudiante o de cualquier otra fuente no autorizada, modificada o no modificada.
+    • Cualquier código o documentación utilizada en mi/nuestro programa obtenido de fuentes, tales como libros o notas de curso, 
+	   han sido claramente indicada en mi/nuestra tarea.
+*/
+
+EJERCICIO 3
+
+a)
+a.1)
+	Límite de elementos por dígito: La estructura de datos colaitem define sus elementos 
+		con elems : vector [1500] numerico. Esto impone una restricción de memoria fija;
+		si en alguna iteración más de 1500 números coinciden en un mismo dígito, se 
+		producirá un error por desbordamiento del vector.  
+	Limitación a números positivos: El algoritmo extrae los dígitos utilizando la 
+		expresión int(V[i]/iter) % 10 + 1. Esta operación asume que el arreglo solo 
+		contiene números enteros positivos y no funciona correctamente si existen 
+		valores negativos.
+
+a.2)
+	La función de tiempo es T(n) = Theta(d*(n + k)), donde d es el número máximo de dígitos 
+		a procesar, n es la cantidad de elementos en el arreglo y k es el tamaño de la base 
+		(en este caso k=10).La complejidad asintótica en notación Big-O es O(d*n). 
+		En la práctica, dado que d suele tratarse como una constante pequeña comparada 
+		con n, se aproxima a O(n).
+		
+
+c)  
+	RadixSort pierde su ventaja de tiempo lineal si el número de dígitos d crece de forma 
+		proporcional a la cantidad de elementos n (es decir, d = O(n)).
+	Ejemplo: Si el algoritmo debe ordenar n enteros que se encuentran en el rango de 0 
+		hasta 2^n, la representación de estos números requiere un número de dígitos 
+		proporcional a n. Por lo tanto, la complejidad asintótica de O(d*n) se convertiría 
+		en O(n*n) = O(n^2). En este caso, el algoritmo tardaría un tiempo cuadrático, 
+		volviéndose menos eficiente que opciones basadas en comparaciones como QuickSort 
+		o MergeSort. 
+

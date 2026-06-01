@@ -1,0 +1,50 @@
+
+  g37
+  Integrante:
+   Gustavo Emanuel Lesme Ortega       CIC: 5249373   Sección: TR
+  TP5-U3
+  
+  Ejercicio2
+
+  Declaración de honor 
+    • Yo Gustavo Emanuel Lesme Ortega
+    • No he discutido el código fuente de mi/nuestra tarea con ningún otro grupo, solo con el Profesor o el AER.
+    • No he usado código obtenido de otro estudiante o de cualquier otra fuente no autorizada, modificada o no modificada.
+    • Cualquier código o documentación utilizada en mi/nuestro programa obtenido de fuentes, tales como libros o notas de curso, 
+	   han sido claramente indicada en mi/nuestra tarea.
+
+------------------------------
+1. Demostrar que en un grafo no dirigido ∑ d(u) = 2|E|  
+	Cada arista en un grafo no dirigido conecta exactamente a dos vértices distintos 
+	(o al mismo vértice dos veces en caso de un bucle).  
+	Por lo tanto, al sumar los grados de todos los vértices, cada arista contribuye 	
+	exactamente con 2 a la suma total (uno por cada extremo).  
+	En consecuencia, la sumatoria de todos los grados es exactamente 
+	el doble del número de aristas: ∑_{u∈V} d(u) = 2|E|.
+
+
+2. Demostrar que debe haber un número par de vértices con grado impar  
+	Sea V el conjunto de vértices, particionado en dos subconjuntos: 
+	V_par (vértices con grado par) y V_impar (vértices con grado impar).  
+	Usando la demostración anterior: ∑_{u∈V} d(u) = ∑_{u∈V_par} d(u) + ∑_{u∈V_impar} d(u) = 2|E|	
+	Sabemos que 2|E| es un número par. 
+	La suma de los grados de los vértices en V_par también es par 
+		(la suma de números pares es par).  
+	Por lo tanto, para que la suma total sea par, ∑_{u∈V_impar} d(u) obligatoriamente 
+		debe ser un número par.  
+	Dado que la suma de un número impar de números impares da como resultado un número impar, 
+		el conjunto V_impar debe contener una cantidad par de elementos para que su suma sea par.
+
+
+3. ¿Es posible realizar una afirmación similar para el indegree en grafos dirigidos?  
+	No, es falso.
+
+○ Contraejemplo: Consideremos un grafo dirigido con dos vértices (A y B) 
+	y una sola arista dirigida desde A hacia B.
+
+○ d_in(A) = 0 (par)
+
+○ d_in(B) = 1 (impar)
+
+En este grafo, solo hay 1 vértice con un grado de entrada impar (el vértice B).  
+Como 1 no es un número par, la afirmación no se cumple para grafos dirigidos.

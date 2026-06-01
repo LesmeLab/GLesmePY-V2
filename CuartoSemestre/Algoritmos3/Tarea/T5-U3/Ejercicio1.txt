@@ -1,0 +1,103 @@
+
+  g37
+  Integrante:
+   Gustavo Emanuel Lesme Ortega       CIC: 5249373   Sección: TR
+  TP5-U3
+  
+  Ejercicio1
+
+  Declaración de honor 
+    • Yo Gustavo Emanuel Lesme Ortega
+    • No he discutido el código fuente de mi/nuestra tarea con ningún otro grupo, solo con el Profesor o el AER.
+    • No he usado código obtenido de otro estudiante o de cualquier otra fuente no autorizada, modificada o no modificada.
+    • Cualquier código o documentación utilizada en mi/nuestro programa obtenido de fuentes, tales como libros o notas de curso, 
+	   han sido claramente indicada en mi/nuestra tarea.
+
+
+
+
+Ejercicio 1 (10p) (Responda en un archivo de texto) 
+a) Definir el concepto de estabilidad de un algoritmo de ordenación. 
+Luego indique claramente su utilidad práctica. Indicar referencia. 
+
+Según el material de Referencia "R. Sedgewick, K. Wayne; Algorithms - Fourth Edition, 2011"; 
+	un método es estable si preserva el orden relativo de claves iguales en el arreglo.
+
+Una utilidad práctica de estabilidad de un algoritmo de ordenación es una aplicación de 
+	comercio electrónico donde debemos procesar una gran cantidad de eventos con ubicaciones 
+	y marcas de tiempo. Supongamos que almacenamos los eventos en un arreglo a medida que 
+	llegan, de modo que estén ordenados por marca de tiempo en el arreglo. 
+	Supongamos que la aplicación requiere que las transacciones se separen por ubicación 
+	para su posterior procesamiento. Una manera sencilla de hacerlo es ordenar el arreglo por 
+	ubicación. Si la ordenación es inestable, las transacciones de cada ciudad podrían no 
+	estar necesariamente ordenadas por marca de tiempo después de la ordenación.
+
+A menudo los programadores que no están familiarizados con la estabilidad se sorprenden, 
+al encontrarse por primera vez con esta situación, por la forma en que un algoritmo 
+inestable parece desordenar los datos.
+
+
+
+b) Indicar si estos algoritmos de ordenación son estables o inestables: 
+
+	InsertSort es Estable, MergeSort es Estable, HeapSort es Inestable, 
+	TimSort es Estable, QuickSort es Inestable, BubbleSort es Estable,
+	ShellSort es Inestable, RadixSort es Estable, CountingSort es Estable.
+
+
+
+c) Considere el siguiente algoritmo de ordenación el arreglo A de n elementos:
+public static <T extends Comparable<T>> void ordenar( T [] A ) {
+    int n = A.length;
+    for ( int i = 0 ; i < n ; i++) {
+        int min = i;
+        for ( int j=i+1; j < n ; j++ ) {
+            if ( A[j].compareTo(A[min]) < 0 ) {
+                min = j;
+            }
+        }
+        //intercambia A[i] con A[min]
+        T tmp = A[i];
+        A[i] = A[min];
+        A[min] = tmp;
+    }
+}
+
+c.1) ¿Es este algoritmo estable o inestable? Fundamente.
+	El algoritmo es inestable.
+	Es inestable porque, al hacer el intercambio directo (swap), el elemento en la posición 
+		actual salta hacia adelante y puede pasar por encima de elementos que tienen su mismo 
+		valor, cambiando su orden original.
+	Ejemplo de inestabilidad:
+		Si se tiene [4a,4b.1], el algoritmo intercambia el 4a con el 1. 
+		Quedando [1,4b,4a], se puede ver que 4b ahora esta antes que 4a, 
+			perdiendo su orden original.
+		
+
+c.2) Si es inestable, indique exactamente la forma de cambiarlo para volverlo estable. 
+	Justificar la respuesta.
+	
+	Se debe cambiar esta parte del algoritmo por otra:
+		ANTES
+		...
+		//intercambia A[i] con A[min]
+        T tmp = A[i];
+        A[i] = A[min];
+        A[min] = tmp;
+		...
+		
+		DESPUES
+		...
+		T tmp = A[min];
+		for(int k = min; k > i; k--) {
+			A[k] = A[k-1];
+		}
+		A[i] = tmp;
+		...
+		
+	El cambio es debido a que en el algoritmo original se hace un INTERCAMBIO pero para volverlo
+		estable debe convertirse en un DESPLAZAMIENTO.
+		En lugar de saltar y cruzar elementos, se extrae el minimo, y se empuja los demas elementos 
+			un espacio hacia la derecha y colocas el minimo al inicio. Como elementos se empujan en
+			bloque, no se cruzan entre si y se mantiene la estabilidad.
+	

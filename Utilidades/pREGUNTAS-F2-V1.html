@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Preguntas IA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .config-bar {
+            background-color: #e1e1e1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .config-bar label {
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            padding: 5px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            height: 250px;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #005a9e;
+        }
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Generador de Imágenes de Preguntas</h2>
+    <p>Completa los datos del archivo y luego pega el JSON.</p>
+    
+    <div class="config-bar">
+        <div>
+            <label for="momentoSelect">Momento:</label>
+            <select id="momentoSelect">
+                <option value="PP">PP</option>
+                <option value="SP">SP</option>
+                <option value="PF">PF</option>
+                <option value="SF">SF</option>
+            </select>
+        </div>
+        <div>
+            <label for="fechaInput">Fecha (DDMMAAAA):</label>
+            <input type="text" id="fechaInput" placeholder="Ej: 30052026" maxlength="8">
+        </div>
+    </div>
+
+    <textarea id="jsonInput" placeholder='Pegue el JSON aquí...'></textarea>
+    <br>
+    <button onclick="generarImagenes()">Generar y Descargar ZIP</button>
+    <p id="status"></p>
+
+    <script>
+        async function generarImagenes() {
+            const inputTexto = document.getElementById('jsonInput').value;
+            const statusText = document.getElementById('status');
+            const momento = document.getElementById('momentoSelect').value;
+            const fecha = document.getElementById('fechaInput').value;
+            
+            // Validaciones iniciales
+            if (fecha.length !== 8 || isNaN(fecha)) {
+                statusText.style.color = "red";
+                statusText.innerText = "Error: La fecha debe tener exactamente 8 números (DDMMAAAA).";
+                return;
+            }
+
+            if (!inputTexto.trim()) {
+                statusText.style.color = "red";
+                statusText.innerText = "Error: Por favor, pega el JSON antes de generar.";
+                return;
+            }
+
+            try {
+                const datos = JSON.parse(inputTexto);
+                const zip = new JSZip();
+                
+                statusText.style.color = "blue";
+                statusText.innerText = "Generando imágenes, por favor espera...";
+
+                const ancho = 2000;
+                const margen = 20;
+                const tamañoFuente = 12;
+                const interlineado = 20;
+
+                for (let i = 0; i < datos.length; i++) {
+                    const item = datos[i];
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const cantidadOpciones = Object.keys(item.opciones).length;
+                    const lineasTotales = 1 + 1 + cantidadOpciones;
+                    const alto = (margen * 2) + (lineasTotales * interlineado);
+
+                    canvas.width = ancho;
+                    canvas.height = alto;
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.fillStyle = "#000000";
+                    ctx.textBaseline = "top";
+                    let y = margen;
+
+                    ctx.font = `${tamañoFuente}px "Courier New", Courier, monospace`;
+                    ctx.fillText(item.pregunta, margen, y);
+                    
+                    y += interlineado * 2;
+
+                    for (const [letra, texto] of Object.entries(item.opciones)) {
+                        if (letra === item.RTA) {
+                            ctx.font = `bold ${tamañoFuente}px "Courier New", Courier, monospace`;
+                            ctx.fillText(letra, margen, y);
+                            
+                            const anchoLetra = ctx.measureText(letra).width;
+                            
+                            ctx.font = `${tamañoFuente}px "Courier New", Courier, monospace`;
+                            ctx.fillText(`) ${texto}`, margen + anchoLetra, y);
+                        } else {
+                            ctx.font = `${tamañoFuente}px "Courier New", Courier, monospace`;
+                            ctx.fillText(`${letra}) ${texto}`, margen, y);
+                        }
+                        y += interlineado;
+                    }
+
+                    const base64Data = canvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "");
+                    
+                    // Creación dinámica del nombre del archivo
+                    const nombreArchivo = `Fisica2_${momento}_1_T_${fecha}_${i + 1}.png`;
+                    zip.file(nombreArchivo, base64Data, {base64: true});
+                }
+
+                statusText.innerText = "Empaquetando ZIP...";
+                const contenidoZip = await zip.generateAsync({ type: "blob" });
+                
+                const url = URL.createObjectURL(contenidoZip);
+                const a = document.createElement("a");
+                a.href = url;
+                // El ZIP también llevará la fecha para que te sea más fácil organizarlo
+                a.download = `Fisica2_${momento}_${fecha}.zip`; 
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusText.style.color = "green";
+                statusText.innerText = `¡Éxito! Se generó un ZIP con ${datos.length} imágenes.`;
+
+            } catch (error) {
+                statusText.style.color = "red";
+                statusText.innerText = "Error: El formato del JSON no es válido. Revisa que no falten comillas o comas. (" + error.message + ")";
+            }
+        }
+    </script>
+</body>
+</html>

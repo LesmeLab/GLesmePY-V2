@@ -1,0 +1,55 @@
+
+  g37
+  Integrante:
+   Gustavo Emanuel Lesme Ortega       CIC: 5249373   Sección: TR
+  TP5-U3
+  
+  Ejercicio2
+
+
+  Declaración de honor 
+    • Yo Gustavo Emanuel Lesme Ortega
+    • No he discutido el código fuente de mi/nuestra tarea con ningún otro grupo, solo con el Profesor o el AER.
+    • No he usado código obtenido de otro estudiante o de cualquier otra fuente no autorizada, modificada o no modificada.
+    • Cualquier código o documentación utilizada en mi/nuestro programa obtenido de fuentes, tales como libros o notas de curso, 
+	   han sido claramente indicada en mi/nuestra tarea.
+
+
+
+
+EJERCICIO 2
+a) 
+	El algoritmo original de QuickSort realiza dos llamadas recursivas: una para el subarreglo 
+	izquierdo y otra para el derecho. En el algoritmo QUICKSORT_RC, la segunda llamada recursiva 
+	no es necesaria y es evitada mediante una estructura iterativa while. Después de realizar la 
+	primera llamada recursiva para ordenar la partición izquierda con QUICKSORT_RC(A, p, q-1), 
+	la instrucción p = q + 1 actualiza el límite inferior del rango de evaluación. 
+	En la siguiente iteración del ciclo while, la función evalúa iterativamente el mismo 
+	subarreglo derecho que habría procesado la segunda llamada recursiva original. 
+	Al replicar el mismo orden de particionamiento, el arreglo se ordena de manera correcta.  
+	
+b) 
+La profundidad máxima de la pila llega a Theta(n) en el peor caso, el cual se presenta cuando 
+	las particiones generadas por la función PARTITION resultan extremadamente desbalanceadas. 
+	Un escenario que provoca esto es cuando el arreglo ya se encuentra completamente ordenado y 
+	el pivote seleccionado es el último elemento. En esta situación, la partición dividirá un 
+	subarreglo de tamaño n en uno de tamaño n-1 y otro de tamaño 0. 
+	La llamada recursiva QUICKSORT_RC(A, p, q-1)  se ejecutará sucesivamente sobre subarreglos 
+	de tamaño n-1, n-2, etc., lo que provocará n llamadas recursivas anidadas apiladas en la 
+	pila de ejecución antes de alcanzar el caso base, ocupando un espacio de Theta(n).  
+	
+c) 
+Para asegurar que la profundidad de la pila sea como máximo Theta(log n), la recursión debe 
+	aplicarse siempre sobre la mitad más pequeña del arreglo después de particionar, dejando que el
+	bucle while se encargue de la mitad de mayor tamaño. De esta manera, el tamaño del problema sobre 
+	el cual se aplica la recursión siempre se reduce al menos a la mitad. 
+
+QUICKSORT_RC_MOD(A, p, r)
+  while p < r do
+    q = PARTITION(A, p, r)
+    if (q - p < r - q) then 
+      QUICKSORT_RC_MOD(A, p, q - 1)
+      p = q + 1  
+    else                    
+      QUICKSORT_RC_MOD(A, q + 1, r)
+      r = q - 1  

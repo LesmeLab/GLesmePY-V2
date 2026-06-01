@@ -1,0 +1,51 @@
+
+  g37
+  Integrante:
+   Gustavo Emanuel Lesme Ortega       CIC: 5249373   Sección: TR
+  TP6-U5
+  
+  Ejercicio3
+
+  Declaración de honor 
+    • Yo Gustavo Emanuel Lesme Ortega
+    • No he discutido el código fuente de mi/nuestra tarea con ningún otro grupo, solo con el Profesor o el AER.
+    • No he usado código obtenido de otro estudiante o de cualquier otra fuente no autorizada, modificada o no modificada.
+    • Cualquier código o documentación utilizada en mi/nuestro programa obtenido de fuentes, tales como libros o notas de curso, 
+	   han sido claramente indicada en mi/nuestra tarea.
+---------------------------------------
+Algoritmo (O(k|E|))  
+Dado que se garantiza que el camino más corto tiene a lo sumo k aristas, 
+	podemos usar una versión modificada del Algoritmo de Bellman-Ford.  
+En lugar de relajar todas las aristas |V| − 1 veces, solo necesitamos relajar 
+	las aristas k veces.
+
+
+ALGORITMO ShortestPathKEdges(G, s, t, k):
+  // Inicialización
+  Para cada vértice v en G.V:
+      dist[v] = INFINITO
+  dist[s] = 0
+
+  // Relajación limitada a k iteraciones
+  Para i = 1 hasta k:
+      Crear un arreglo dist_temp copia de dist
+      Para cada arista (u, v) con peso w en G.E:
+          Si dist[u] + w < dist_temp[v]:
+              dist_temp[v] = dist[u] + w
+      dist = dist_temp
+
+  Retornar dist[t]
+  
+  
+  
+Grafo de Ejemplo:  
+Supongamos un grafo donde s = A, t = C y k = 2.  
+Aristas: (A → B, peso: 2), (B → C, peso: 3), (A → C, peso: 10).
+
+- Iteración 1: dist[A] = 0, dist[B] = 2, dist[C] = 10. (Caminos de 1 arista).
+
+- Iteración 2: Se evalúa la arista B → C.  
+  dist[B] + 3 = 5 < dist_temp[C] (10).  
+  Se actualiza dist[C] = 5. (Caminos de hasta 2 aristas).  
+
+El algoritmo encuentra el camino más corto (A → B → C con costo 5) en exactamente k = 2 iteraciones.
