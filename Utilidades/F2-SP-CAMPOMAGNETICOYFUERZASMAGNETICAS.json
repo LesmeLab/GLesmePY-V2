@@ -1,0 +1,1267 @@
+[
+  {
+    "pregunta": "¿Cuál de las siguientes afirmaciones describe correctamente una fuerza magnética?",
+    "opciones": {
+      "A": "Actúa sobre cualquier carga eléctrica, esté o no en movimiento",
+      "B": "Solo actúa sobre cargas eléctricas en movimiento",
+      "C": "Siempre es paralela al campo magnético",
+      "D": "Depende únicamente de la masa de la partícula",
+      "E": "No depende de la velocidad de la partícula"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Respecto a los polos magnéticos de un imán, es correcto afirmar que:",
+    "opciones": {
+      "A": "Un polo norte puede existir aislado",
+      "B": "Un polo sur puede existir aislado",
+      "C": "Al partir un imán se obtiene un polo norte y uno sur separados",
+      "D": "Los polos magnéticos siempre aparecen en pares",
+      "E": "Los monopolos magnéticos son comunes en la naturaleza"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "La magnitud de la fuerza magnética sobre una carga que se mueve en un campo magnético está dada por:",
+    "opciones": {
+      "A": "F = qB",
+      "B": "F = qvB cos(θ)",
+      "C": "F = qvB sen(θ)",
+      "D": "F = qB/v",
+      "E": "F = qv²B"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Una partícula cargada se mueve paralelamente a un campo magnético uniforme. ¿Qué fuerza magnética experimenta?",
+    "opciones": {
+      "A": "Máxima",
+      "B": "Igual a qB",
+      "C": "Igual a qvB",
+      "D": "Depende de la masa",
+      "E": "Cero"
+    },
+    "RTA": "E"
+  },
+  {
+    "pregunta": "La dirección de la fuerza magnética sobre una carga positiva se determina mediante:",
+    "opciones": {
+      "A": "La ley de Coulomb",
+      "B": "La regla de la mano izquierda",
+      "C": "La ley de Gauss",
+      "D": "La regla de la mano derecha",
+      "E": "El principio de Arquímedes"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Cuál es la unidad del Sistema Internacional para el campo magnético?",
+    "opciones": {
+      "A": "Weber (Wb)",
+      "B": "Tesla (T)",
+      "C": "Volt (V)",
+      "D": "Coulomb (C)",
+      "E": "Newton (N)"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Cuando una partícula cargada se mueve perpendicularmente a un campo magnético uniforme, su trayectoria es:",
+    "opciones": {
+      "A": "Rectilínea uniforme",
+      "B": "Parabólica",
+      "C": "Elíptica",
+      "D": "Circular",
+      "E": "Espiral creciente"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué establece la ley de Gauss para el magnetismo?",
+    "opciones": {
+      "A": "El flujo magnético total a través de una superficie cerrada es siempre positivo",
+      "B": "El flujo magnético total depende de la carga encerrada",
+      "C": "El flujo magnético total a través de una superficie cerrada es cero",
+      "D": "Existen monopolos magnéticos aislados",
+      "E": "El flujo magnético es proporcional a la masa encerrada"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué científico descubrió en 1820 que una corriente eléctrica puede desviar la aguja de una brújula?",
+    "opciones": {
+      "A": "Isaac Newton",
+      "B": "Michael Faraday",
+      "C": "Hans Christian Oersted",
+      "D": "James Clerk Maxwell",
+      "E": "Nikola Tesla"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La Tierra se comporta como:",
+    "opciones": {
+      "A": "Un conductor ideal",
+      "B": "Un capacitor gigante",
+      "C": "Un imán",
+      "D": "Un aislante eléctrico",
+      "E": "Una fuente de corriente alterna"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál es la dirección del campo magnético en un punto del espacio?",
+    "opciones": {
+      "A": "La dirección de la velocidad de una carga positiva",
+      "B": "La dirección de la fuerza gravitatoria",
+      "C": "La dirección en la que apunta el polo norte de una brújula",
+      "D": "La dirección de la corriente eléctrica",
+      "E": "La dirección de la aceleración de una partícula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué ocurre con una carga eléctrica en reposo dentro de un campo magnético uniforme?",
+    "opciones": {
+      "A": "Experimenta una fuerza máxima",
+      "B": "Experimenta una fuerza proporcional a la carga",
+      "C": "Experimenta una aceleración constante",
+      "D": "No experimenta fuerza magnética",
+      "E": "Describe una trayectoria circular"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "Si una carga positiva y una negativa se mueven con la misma velocidad en el mismo campo magnético, las fuerzas magnéticas que experimentan son:",
+    "opciones": {
+      "A": "Iguales en magnitud y dirección",
+      "B": "Diferentes en magnitud y dirección",
+      "C": "Iguales en magnitud y opuestas en dirección",
+      "D": "Nulas para ambas cargas",
+      "E": "Paralelas al campo magnético"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál es el valor aproximado del campo magnético terrestre?",
+    "opciones": {
+      "A": "10² T",
+      "B": "10⁻⁴ T",
+      "C": "10⁴ T",
+      "D": "1 T",
+      "E": "100 T"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Las líneas de campo magnético:",
+    "opciones": {
+      "A": "Siempre se cruzan",
+      "B": "Comienzan en el polo norte y terminan en el vacío",
+      "C": "Forman trayectorias abiertas",
+      "D": "Nunca se cruzan entre sí",
+      "E": "Son paralelas en cualquier situación"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué unidad se utiliza para medir el flujo magnético?",
+    "opciones": {
+      "A": "Tesla",
+      "B": "Volt",
+      "C": "Weber",
+      "D": "Ampere",
+      "E": "Faradio"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Según la ley de Gauss para el magnetismo, el flujo magnético total a través de una superficie cerrada es:",
+    "opciones": {
+      "A": "Positivo",
+      "B": "Negativo",
+      "C": "Infinito",
+      "D": "Dependiente de la carga encerrada",
+      "E": "Cero"
+    },
+    "RTA": "E"
+  },
+  {
+    "pregunta": "Cuando una partícula cargada se mueve en un campo magnético uniforme, la fuerza magnética realiza:",
+    "opciones": {
+      "A": "Trabajo positivo",
+      "B": "Trabajo negativo",
+      "C": "Trabajo variable",
+      "D": "Ningún trabajo",
+      "E": "Trabajo máximo"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "El radio de una trayectoria circular de una partícula cargada en un campo magnético es directamente proporcional a:",
+    "opciones": {
+      "A": "La carga eléctrica",
+      "B": "La intensidad del campo magnético",
+      "C": "La cantidad de movimiento de la partícula",
+      "D": "El cuadrado de la carga",
+      "E": "La frecuencia angular"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Si una partícula tiene una componente de velocidad paralela al campo magnético y otra perpendicular, la trayectoria será:",
+    "opciones": {
+      "A": "Rectilínea",
+      "B": "Circular",
+      "C": "Parabólica",
+      "D": "Helicoidal",
+      "E": "Elíptica"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué sucede con la magnitud de la fuerza magnética si se duplica la carga de una partícula y se mantienen constantes la velocidad y el campo magnético?",
+    "opciones": {
+      "A": "Se reduce a la mitad",
+      "B": "Permanece igual",
+      "C": "Se duplica",
+      "D": "Se cuadruplica",
+      "E": "Se anula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La fuerza magnética sobre una partícula cargada es siempre perpendicular a:",
+    "opciones": {
+      "A": "La velocidad solamente",
+      "B": "El campo magnético solamente",
+      "C": "La velocidad y el campo magnético",
+      "D": "La aceleración",
+      "E": "La masa"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué ocurre cuando los vectores velocidad y campo magnético son antiparalelos?",
+    "opciones": {
+      "A": "La fuerza es máxima",
+      "B": "La fuerza es mínima pero distinta de cero",
+      "C": "La fuerza cambia de signo",
+      "D": "La fuerza es cero",
+      "E": "La fuerza depende de la masa"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Cuál es la principal diferencia entre una carga eléctrica y un polo magnético?",
+    "opciones": {
+      "A": "Los polos magnéticos tienen masa",
+      "B": "Las cargas eléctricas no interactúan",
+      "C": "Las cargas eléctricas pueden existir aisladas",
+      "D": "Los polos magnéticos son siempre positivos",
+      "E": "Las cargas eléctricas siempre aparecen en pares"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Las líneas de campo magnético alrededor de un imán de barra salen de:",
+    "opciones": {
+      "A": "El polo sur y entran al norte",
+      "B": "El centro del imán",
+      "C": "Ambos polos simultáneamente",
+      "D": "El polo norte y entran al sur",
+      "E": "Ningún polo"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué representa un símbolo '×' en un diagrama de campo magnético?",
+    "opciones": {
+      "A": "Campo saliendo del plano",
+      "B": "Campo entrando al plano",
+      "C": "Campo paralelo al plano",
+      "D": "Campo nulo",
+      "E": "Corriente eléctrica"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué representa un símbolo '•' en un diagrama de campo magnético?",
+    "opciones": {
+      "A": "Campo entrando al plano",
+      "B": "Campo nulo",
+      "C": "Campo saliendo del plano",
+      "D": "Campo paralelo al plano",
+      "E": "Polo norte"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Si el flujo magnético a través de una superficie plana es máximo, el campo magnético es:",
+    "opciones": {
+      "A": "Paralelo a la superficie",
+      "B": "Perpendicular a la superficie",
+      "C": "Tangente a la superficie",
+      "D": "Nulo",
+      "E": "Variable"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Cuál es la expresión del flujo magnético para un campo uniforme?",
+    "opciones": {
+      "A": "Φ = BA senθ",
+      "B": "Φ = B/A",
+      "C": "Φ = BA cosθ",
+      "D": "Φ = qvB",
+      "E": "Φ = B²A"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cómo varía la rapidez de una partícula cargada cuando solo actúa sobre ella una fuerza magnética?",
+    "opciones": {
+      "A": "Aumenta constantemente",
+      "B": "Disminuye constantemente",
+      "C": "Depende de la carga",
+      "D": "Permanece constante",
+      "E": "Se vuelve cero"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "La frecuencia de ciclotrón depende de:",
+    "opciones": {
+      "A": "La velocidad de la partícula",
+      "B": "El radio de la órbita",
+      "C": "La masa, la carga y el campo magnético",
+      "D": "La energía cinética solamente",
+      "E": "La temperatura"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué dispositivo permite seleccionar partículas con una velocidad específica mediante campos eléctricos y magnéticos?",
+    "opciones": {
+      "A": "Transformador",
+      "B": "Generador",
+      "C": "Selector de velocidad",
+      "D": "Capacitor",
+      "E": "Galvanómetro"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "En un selector de velocidad, la rapidez de las partículas que no se desvían está dada por:",
+    "opciones": {
+      "A": "v = qE",
+      "B": "v = B/E",
+      "C": "v = qB/E",
+      "D": "v = E/B",
+      "E": "v = qEB"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Quién midió experimentalmente la relación carga/masa del electrón utilizando campos eléctricos y magnéticos?",
+    "opciones": {
+      "A": "Faraday",
+      "B": "Maxwell",
+      "C": "Thomson",
+      "D": "Ampère",
+      "E": "Gauss"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Los cinturones de radiación que rodean la Tierra reciben el nombre de:",
+    "opciones": {
+      "A": "Cinturones de Maxwell",
+      "B": "Cinturones de Faraday",
+      "C": "Cinturones de Tesla",
+      "D": "Cinturones de Van Allen",
+      "E": "Cinturones de Oersted"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué característica distingue a una fuerza magnética de una fuerza eléctrica?",
+    "opciones": {
+      "A": "Actúa sobre cualquier objeto",
+      "B": "Solo actúa sobre partículas neutras",
+      "C": "Solo actúa sobre cargas en movimiento",
+      "D": "Siempre es atractiva",
+      "E": "Siempre es repulsiva"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál de las siguientes partículas experimentará una fuerza magnética en presencia de un campo magnético?",
+    "opciones": {
+      "A": "Una partícula cargada en reposo",
+      "B": "Una partícula neutra en movimiento",
+      "C": "Una partícula cargada en movimiento",
+      "D": "Un neutrón en reposo",
+      "E": "Un cuerpo sin carga"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Cuando un imán de barra se rompe en dos partes, se obtiene:",
+    "opciones": {
+      "A": "Un polo norte aislado y un polo sur aislado",
+      "B": "Dos polos norte",
+      "C": "Dos polos sur",
+      "D": "Dos imanes más pequeños",
+      "E": "Un material no magnetizado"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué científico formuló las ecuaciones que unifican electricidad y magnetismo?",
+    "opciones": {
+      "A": "Newton",
+      "B": "Einstein",
+      "C": "Maxwell",
+      "D": "Bohr",
+      "E": "Galileo"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Si una carga positiva se mueve perpendicularmente a un campo magnético y se duplica la intensidad del campo, la fuerza magnética:",
+    "opciones": {
+      "A": "Se reduce a la mitad",
+      "B": "No cambia",
+      "C": "Se duplica",
+      "D": "Se cuadruplica",
+      "E": "Se anula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La unidad gauss equivale a:",
+    "opciones": {
+      "A": "10⁴ T",
+      "B": "10⁻⁴ T",
+      "C": "10⁻² T",
+      "D": "10² T",
+      "E": "1 T"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Las líneas de campo magnético indican:",
+    "opciones": {
+      "A": "La trayectoria de una carga positiva",
+      "B": "La dirección de la fuerza magnética",
+      "C": "La dirección que apunta una brújula",
+      "D": "La dirección de una corriente eléctrica",
+      "E": "La aceleración de una partícula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué ocurre donde las líneas de campo magnético están más juntas?",
+    "opciones": {
+      "A": "El campo es más débil",
+      "B": "El campo es nulo",
+      "C": "El campo cambia de dirección",
+      "D": "El campo es más intenso",
+      "E": "No existe campo"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Por qué las líneas de campo magnético nunca se cruzan?",
+    "opciones": {
+      "A": "Porque el campo es escalar",
+      "B": "Porque la dirección del campo es única en cada punto",
+      "C": "Porque los imanes lo impiden",
+      "D": "Porque el flujo es constante",
+      "E": "Porque existen monopolos"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Cuál es la unidad SI del flujo magnético?",
+    "opciones": {
+      "A": "Tesla",
+      "B": "Newton",
+      "C": "Weber",
+      "D": "Joule",
+      "E": "Volt"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Una superficie cerrada atraviesa varias líneas de campo magnético. El flujo magnético neto total será:",
+    "opciones": {
+      "A": "Positivo",
+      "B": "Negativo",
+      "C": "Infinito",
+      "D": "Dependiente del área",
+      "E": "Cero"
+    },
+    "RTA": "E"
+  },
+  {
+    "pregunta": "¿Qué forma describirá una partícula cargada si entra perpendicularmente en un campo magnético uniforme?",
+    "opciones": {
+      "A": "Recta",
+      "B": "Parábola",
+      "C": "Circunferencia",
+      "D": "Elipse",
+      "E": "Hipérbola"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Si la masa de una partícula aumenta y las demás variables permanecen constantes, el radio de su órbita magnética:",
+    "opciones": {
+      "A": "Disminuye",
+      "B": "Permanece constante",
+      "C": "Aumenta",
+      "D": "Se anula",
+      "E": "Se vuelve negativo"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál de las siguientes magnitudes NO cambia debido a una fuerza magnética?",
+    "opciones": {
+      "A": "La dirección de la velocidad",
+      "B": "La aceleración",
+      "C": "La trayectoria",
+      "D": "La rapidez",
+      "E": "El sentido del movimiento"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "Una botella magnética se utiliza para:",
+    "opciones": {
+      "A": "Medir corrientes eléctricas",
+      "B": "Generar rayos X",
+      "C": "Confinar partículas cargadas",
+      "D": "Aumentar la gravedad",
+      "E": "Reducir la carga eléctrica"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Las auroras boreales se producen principalmente por:",
+    "opciones": {
+      "A": "Rayos cósmicos atrapados en el Sol",
+      "B": "Partículas cargadas atrapadas por el campo magnético terrestre",
+      "C": "Corrientes oceánicas",
+      "D": "Descargas volcánicas",
+      "E": "Ondas sísmicas"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "En una cámara de burbujas, la curvatura de la trayectoria de una partícula permite determinar:",
+    "opciones": {
+      "A": "Su color",
+      "B": "Su temperatura",
+      "C": "Su masa y carga",
+      "D": "Su volumen",
+      "E": "Su densidad"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué ocurre con el radio de curvatura de una partícula cuando pierde energía en una cámara de burbujas?",
+    "opciones": {
+      "A": "Aumenta",
+      "B": "Permanece constante",
+      "C": "Disminuye",
+      "D": "Se vuelve infinito",
+      "E": "Se duplica"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál es la principal función de un selector de velocidad?",
+    "opciones": {
+      "A": "Separar partículas por masa",
+      "B": "Separar partículas por carga",
+      "C": "Seleccionar partículas con una velocidad específica",
+      "D": "Aumentar la energía de partículas",
+      "E": "Eliminar partículas neutras"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "En un selector de velocidad, una partícula pasa sin desviarse cuando:",
+    "opciones": {
+      "A": "La fuerza eléctrica es mayor que la magnética",
+      "B": "La fuerza magnética es mayor que la eléctrica",
+      "C": "Las dos fuerzas son iguales y opuestas",
+      "D": "No existe campo magnético",
+      "E": "No existe campo eléctrico"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál es la dirección de la fuerza magnética sobre una carga positiva en movimiento?",
+    "opciones": {
+      "A": "Paralela a la velocidad",
+      "B": "Paralela al campo magnético",
+      "C": "Perpendicular a la velocidad y al campo magnético",
+      "D": "Opuesta a la velocidad",
+      "E": "Opuesta al campo magnético"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La fuerza magnética sobre una carga en movimiento depende de:",
+    "opciones": {
+      "A": "La masa de la partícula únicamente",
+      "B": "La carga, la velocidad y el campo magnético",
+      "C": "La temperatura del medio",
+      "D": "La presión atmosférica",
+      "E": "La densidad del material"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué ocurre con una carga negativa en un campo magnético respecto a una carga positiva?",
+    "opciones": {
+      "A": "Experimenta una fuerza en la misma dirección",
+      "B": "No experimenta fuerza",
+      "C": "Experimenta una fuerza de igual magnitud y dirección opuesta",
+      "D": "Experimenta una fuerza doble",
+      "E": "Experimenta una fuerza nula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál es la unidad SI del campo magnético?",
+    "opciones": {
+      "A": "Weber",
+      "B": "Tesla",
+      "C": "Joule",
+      "D": "Volt",
+      "E": "Coulomb"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Si el ángulo entre la velocidad y el campo magnético es 90°, la fuerza magnética será:",
+    "opciones": {
+      "A": "Nula",
+      "B": "Mínima",
+      "C": "Máxima",
+      "D": "Negativa",
+      "E": "Indeterminada"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Si el ángulo entre la velocidad y el campo magnético es 0°, la fuerza magnética será:",
+    "opciones": {
+      "A": "Máxima",
+      "B": "La mitad del valor máximo",
+      "C": "El doble del valor máximo",
+      "D": "Nula",
+      "E": "Infinita"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué representa físicamente el flujo magnético?",
+    "opciones": {
+      "A": "La cantidad de carga eléctrica",
+      "B": "La cantidad de líneas de campo que atraviesan una superficie",
+      "C": "La energía de un campo magnético",
+      "D": "La velocidad de una partícula",
+      "E": "La masa encerrada"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Cuando el campo magnético es paralelo a una superficie, el flujo magnético es:",
+    "opciones": {
+      "A": "Máximo",
+      "B": "Positivo",
+      "C": "Negativo",
+      "D": "Variable",
+      "E": "Cero"
+    },
+    "RTA": "E"
+  },
+  {
+    "pregunta": "El flujo magnético a través de una superficie aumenta cuando:",
+    "opciones": {
+      "A": "Disminuye el área",
+      "B": "Disminuye el campo magnético",
+      "C": "Aumenta el área perpendicular al campo",
+      "D": "El ángulo es 90°",
+      "E": "La carga disminuye"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué indica la ley de Gauss para el magnetismo acerca de los monopolos magnéticos?",
+    "opciones": {
+      "A": "Son abundantes",
+      "B": "Existen solo en laboratorio",
+      "C": "Se observan en los imanes comunes",
+      "D": "No han sido observados",
+      "E": "Son equivalentes a electrones"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "Una partícula cargada se mueve con rapidez constante en un campo magnético porque:",
+    "opciones": {
+      "A": "No existe aceleración",
+      "B": "La fuerza magnética es paralela al movimiento",
+      "C": "La fuerza magnética no realiza trabajo",
+      "D": "La masa cambia continuamente",
+      "E": "El campo magnético desaparece"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué tipo de aceleración experimenta una partícula que describe una trayectoria circular en un campo magnético uniforme?",
+    "opciones": {
+      "A": "Tangencial",
+      "B": "Angular",
+      "C": "Lineal",
+      "D": "Centrípeta",
+      "E": "Nula"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "Si la carga de una partícula se duplica y todo lo demás permanece constante, el radio de la órbita circular:",
+    "opciones": {
+      "A": "Se duplica",
+      "B": "Permanece igual",
+      "C": "Se reduce a la mitad",
+      "D": "Se cuadruplica",
+      "E": "Se vuelve infinito"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La frecuencia de ciclotrón es independiente de:",
+    "opciones": {
+      "A": "La carga",
+      "B": "La masa",
+      "C": "El campo magnético",
+      "D": "El radio de la órbita",
+      "E": "La intensidad del campo"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué trayectoria sigue una partícula cuando posee velocidad paralela y perpendicular al campo magnético?",
+    "opciones": {
+      "A": "Rectilínea",
+      "B": "Parabólica",
+      "C": "Helicoidal",
+      "D": "Circular",
+      "E": "Hiperbólica"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál de las siguientes aplicaciones utiliza el movimiento circular de partículas cargadas?",
+    "opciones": {
+      "A": "Transformador",
+      "B": "Ciclotrón",
+      "C": "Resistencia eléctrica",
+      "D": "Capacitor",
+      "E": "Termómetro"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué magnitud permanece constante durante el movimiento helicoidal en un campo magnético uniforme?",
+    "opciones": {
+      "A": "La fuerza",
+      "B": "El radio",
+      "C": "La rapidez",
+      "D": "La aceleración",
+      "E": "La posición"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué partícula tiene carga positiva y la misma masa que un electrón?",
+    "opciones": {
+      "A": "Protón",
+      "B": "Neutrón",
+      "C": "Positrón",
+      "D": "Fotón",
+      "E": "Muon"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "En una cámara de burbujas, partículas con cargas opuestas se distinguen porque:",
+    "opciones": {
+      "A": "Tienen colores distintos",
+      "B": "Se mueven con igual rapidez",
+      "C": "Se curvan en direcciones opuestas",
+      "D": "Desaparecen inmediatamente",
+      "E": "No interactúan con el campo magnético"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué magnitud se mide experimentalmente observando la curvatura de partículas en un campo magnético?",
+    "opciones": {
+      "A": "La presión",
+      "B": "La viscosidad",
+      "C": "La masa y la carga",
+      "D": "La temperatura",
+      "E": "La densidad"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál es la unidad equivalente de un weber (Wb)?",
+    "opciones": {
+      "A": "T/m²",
+      "B": "T·m²",
+      "C": "N/C",
+      "D": "V/m",
+      "E": "A·m"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "El campo magnético también se conoce como:",
+    "opciones": {
+      "A": "Densidad de corriente",
+      "B": "Densidad de flujo magnético",
+      "C": "Potencial magnético",
+      "D": "Flujo eléctrico",
+      "E": "Gradiente magnético"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué sucede con el flujo magnético total a través de una superficie cerrada que rodea un imán?",
+    "opciones": {
+      "A": "Es positivo",
+      "B": "Es negativo",
+      "C": "Es máximo",
+      "D": "Es cero",
+      "E": "Depende del tamaño del imán"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "La inexistencia de monopolos magnéticos implica que las líneas de campo magnético:",
+    "opciones": {
+      "A": "Empiezan en el infinito",
+      "B": "Terminan en el polo sur",
+      "C": "Forman lazos cerrados",
+      "D": "Son rectas",
+      "E": "Desaparecen en el vacío"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué parámetro aumenta el radio de una órbita circular de una partícula cargada en un campo magnético?",
+    "opciones": {
+      "A": "Mayor carga",
+      "B": "Mayor campo magnético",
+      "C": "Mayor velocidad",
+      "D": "Menor masa",
+      "E": "Menor cantidad de movimiento"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Si el campo magnético se duplica y todo lo demás permanece constante, el radio de la órbita:",
+    "opciones": {
+      "A": "Se duplica",
+      "B": "Permanece constante",
+      "C": "Se cuadruplica",
+      "D": "Se reduce a la mitad",
+      "E": "Se vuelve cero"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "¿Qué magnitud determina la dirección de curvatura de una partícula en un campo magnético?",
+    "opciones": {
+      "A": "La masa",
+      "B": "La energía",
+      "C": "El signo de la carga",
+      "D": "La temperatura",
+      "E": "La presión"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "Un electrón y un protón ingresan perpendicularmente al mismo campo magnético con igual rapidez. ¿Cuál tendrá menor radio?",
+    "opciones": {
+      "A": "El protón",
+      "B": "El electrón",
+      "C": "Ambos iguales",
+      "D": "Depende del campo",
+      "E": "No se puede determinar"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "La frecuencia del ciclotrón aumenta cuando:",
+    "opciones": {
+      "A": "Aumenta la masa",
+      "B": "Disminuye el campo magnético",
+      "C": "Aumenta la carga",
+      "D": "Aumenta el radio",
+      "E": "Aumenta la velocidad"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál de las siguientes magnitudes NO afecta la frecuencia de ciclotrón?",
+    "opciones": {
+      "A": "Carga",
+      "B": "Campo magnético",
+      "C": "Masa",
+      "D": "Radio orbital",
+      "E": "Relación carga-masa"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "En un movimiento helicoidal, la componente de velocidad paralela al campo magnético:",
+    "opciones": {
+      "A": "Disminuye constantemente",
+      "B": "Aumenta constantemente",
+      "C": "Permanece constante",
+      "D": "Se anula",
+      "E": "Cambia de dirección"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué determina el avance de una hélice descrita por una partícula cargada?",
+    "opciones": {
+      "A": "La componente paralela de la velocidad",
+      "B": "La carga",
+      "C": "La masa",
+      "D": "El radio",
+      "E": "La energía potencial"
+    },
+    "RTA": "A"
+  },
+  {
+    "pregunta": "Una botella magnética permite:",
+    "opciones": {
+      "A": "Reducir la masa de las partículas",
+      "B": "Confinar plasmas calientes",
+      "C": "Crear monopolos magnéticos",
+      "D": "Eliminar campos eléctricos",
+      "E": "Aumentar la gravedad"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Los cinturones de Van Allen están formados principalmente por:",
+    "opciones": {
+      "A": "Átomos neutros",
+      "B": "Partículas cargadas atrapadas",
+      "C": "Ondas sonoras",
+      "D": "Campos eléctricos",
+      "E": "Fotones visibles"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué fenómeno luminoso está asociado con partículas atrapadas por el campo magnético terrestre?",
+    "opciones": {
+      "A": "Eclipses",
+      "B": "Rayos gamma",
+      "C": "Auroras",
+      "D": "Arcoíris",
+      "E": "Espejismos"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué tipo de radiación puede producir pares electrón-positrón al interactuar con la materia?",
+    "opciones": {
+      "A": "Microondas",
+      "B": "Ondas de radio",
+      "C": "Rayos gamma",
+      "D": "Luz infrarroja",
+      "E": "Ultrasonido"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "En una cámara de burbujas, la disminución del radio de curvatura indica que la partícula:",
+    "opciones": {
+      "A": "Gana energía",
+      "B": "Pierde energía",
+      "C": "Cambia de carga",
+      "D": "Aumenta su masa",
+      "E": "Desaparece"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué condición debe cumplirse para que una partícula atraviese un selector de velocidad sin desviarse?",
+    "opciones": {
+      "A": "qE = 2qvB",
+      "B": "qE = qvB",
+      "C": "E = qB",
+      "D": "v = qE",
+      "E": "B = qv"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "En el experimento de Thomson, la relación medida fue:",
+    "opciones": {
+      "A": "m/e",
+      "B": "e²/m",
+      "C": "e/m",
+      "D": "em",
+      "E": "e/B"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué magnitud se utilizó para acelerar electrones en el experimento de Thomson?",
+    "opciones": {
+      "A": "Campo gravitatorio",
+      "B": "Diferencia de potencial",
+      "C": "Campo magnético variable",
+      "D": "Presión de radiación",
+      "E": "Campo térmico"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué científico descubrió la relación entre corriente eléctrica y magnetismo al observar una brújula cerca de un conductor?",
+    "opciones": {
+      "A": "Faraday",
+      "B": "Maxwell",
+      "C": "Oersted",
+      "D": "Gauss",
+      "E": "Thomson"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La fuerza magnética sobre una carga positiva apunta en la dirección de:",
+    "opciones": {
+      "A": "La velocidad",
+      "B": "El campo magnético",
+      "C": "El producto cruz entre velocidad y campo magnético",
+      "D": "La aceleración gravitatoria",
+      "E": "La masa"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Cuál de las siguientes magnitudes es escalar?",
+    "opciones": {
+      "A": "Campo magnético",
+      "B": "Velocidad",
+      "C": "Fuerza magnética",
+      "D": "Flujo magnético",
+      "E": "Aceleración"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "Si una partícula cargada duplica su velocidad manteniendo constante el campo magnético y el ángulo, la fuerza magnética:",
+    "opciones": {
+      "A": "Permanece igual",
+      "B": "Se reduce a la mitad",
+      "C": "Se duplica",
+      "D": "Se cuadruplica",
+      "E": "Se anula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué ocurre con la energía cinética de una partícula cuando únicamente actúa un campo magnético?",
+    "opciones": {
+      "A": "Aumenta",
+      "B": "Disminuye",
+      "C": "Se vuelve cero",
+      "D": "Permanece constante",
+      "E": "Oscila"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "El flujo magnético es máximo cuando el ángulo entre el campo magnético y el vector área es:",
+    "opciones": {
+      "A": "0°",
+      "B": "30°",
+      "C": "45°",
+      "D": "60°",
+      "E": "90°"
+    },
+    "RTA": "A"
+  },
+  {
+    "pregunta": "¿Qué sucede con el flujo magnético cuando el campo es perpendicular al vector área?",
+    "opciones": {
+      "A": "Es nulo",
+      "B": "Es máximo",
+      "C": "Es negativo",
+      "D": "Es mínimo",
+      "E": "Depende de la carga"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Cuál es la principal conclusión de la ley de Gauss para el magnetismo?",
+    "opciones": {
+      "A": "Existen monopolos magnéticos",
+      "B": "El flujo magnético neto cerrado es cero",
+      "C": "El campo magnético es uniforme",
+      "D": "Toda corriente produce carga",
+      "E": "Toda carga produce flujo"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "La trayectoria de una partícula cargada en un campo magnético uniforme perpendicular a su velocidad es:",
+    "opciones": {
+      "A": "Recta",
+      "B": "Parabólica",
+      "C": "Circular",
+      "D": "Helicoidal",
+      "E": "Elíptica"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué fuerza proporciona la aceleración centrípeta en el movimiento circular de una partícula cargada?",
+    "opciones": {
+      "A": "La fuerza gravitatoria",
+      "B": "La fuerza eléctrica",
+      "C": "La fuerza normal",
+      "D": "La fuerza magnética",
+      "E": "La fuerza de rozamiento"
+    },
+    "RTA": "D"
+  },
+  {
+    "pregunta": "Si la masa de una partícula se duplica, manteniendo constante todo lo demás, el radio de la órbita:",
+    "opciones": {
+      "A": "Se reduce a la mitad",
+      "B": "Permanece constante",
+      "C": "Se duplica",
+      "D": "Se cuadruplica",
+      "E": "Se vuelve cero"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué magnitud es directamente proporcional al radio de la órbita de una partícula cargada?",
+    "opciones": {
+      "A": "Campo magnético",
+      "B": "Carga",
+      "C": "Cantidad de movimiento",
+      "D": "Frecuencia",
+      "E": "Flujo"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La rapidez angular de una partícula en movimiento circular dentro de un campo magnético depende de:",
+    "opciones": {
+      "A": "La velocidad lineal",
+      "B": "El radio de la órbita",
+      "C": "La carga, masa y campo magnético",
+      "D": "La energía potencial",
+      "E": "La posición"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Qué aparato utiliza la frecuencia de movimiento circular de electrones para generar microondas?",
+    "opciones": {
+      "A": "Transformador",
+      "B": "Motor eléctrico",
+      "C": "Magnetrón",
+      "D": "Galvanómetro",
+      "E": "Generador Van de Graaff"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "La frecuencia típica utilizada por un horno de microondas doméstico es aproximadamente:",
+    "opciones": {
+      "A": "2450 MHz",
+      "B": "60 Hz",
+      "C": "50 kHz",
+      "D": "3 GHz",
+      "E": "120 Hz"
+    },
+    "RTA": "A"
+  },
+  {
+    "pregunta": "En una trayectoria helicoidal, el radio está determinado por:",
+    "opciones": {
+      "A": "La componente paralela de la velocidad",
+      "B": "La componente perpendicular de la velocidad",
+      "C": "La energía potencial",
+      "D": "La frecuencia",
+      "E": "El flujo magnético"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué ocurre con la componente de velocidad paralela al campo magnético?",
+    "opciones": {
+      "A": "Aumenta continuamente",
+      "B": "Disminuye continuamente",
+      "C": "Permanece constante",
+      "D": "Cambia de signo",
+      "E": "Se anula"
+    },
+    "RTA": "C"
+  },
+  {
+    "pregunta": "¿Para qué se utilizan las botellas magnéticas en física?",
+    "opciones": {
+      "A": "Medir voltajes",
+      "B": "Confinar plasmas de alta temperatura",
+      "C": "Generar cargas eléctricas",
+      "D": "Reducir la masa de partículas",
+      "E": "Crear monopolos magnéticos"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "Las auroras se producen cuando partículas cargadas:",
+    "opciones": {
+      "A": "Escapan del campo terrestre",
+      "B": "Colisionan con la atmósfera cerca de los polos",
+      "C": "Se convierten en neutrones",
+      "D": "Pierden completamente su carga",
+      "E": "Abandonan el sistema solar"
+    },
+    "RTA": "B"
+  },
+  {
+    "pregunta": "¿Qué propiedad permite distinguir un electrón de un positrón en un campo magnético?",
+    "opciones": {
+      "A": "La masa",
+      "B": "La temperatura",
+      "C": "El signo de la carga",
+      "D": "La energía potencial",
+      "E": "La densidad"
+    },
+    "RTA": "C"
+  }
+]
