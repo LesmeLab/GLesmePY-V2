@@ -1,0 +1,5246 @@
+/* check the source on github.com/wo/tpg */
+
+Array.prototype.isArray = true;
+Array.prototype.toString = function() {
+return "["+this.join(",")+"]";
+}
+Array.prototype.extend = function(otherArray) {
+this.push.apply(this, otherArray);
+}
+Array.prototype.remove = function(element) {
+var index = this.indexOf(element);
+if (index > -1) this.splice(index, 1);
+}
+Array.prototype.intersect = function(elements) {
+for (var i=0; i<this.length; i++) {
+if (elements.indexOf(this[i]) == -1) {
+this.splice(i--, 1);
+}
+}
+}
+Array.prototype.insert = function(element, index) {
+return this.splice(index, 0, element);
+}
+Array.prototype.concatNoDuplicates = function(array2) {
+var hash = {};
+var res = [];
+for (var i=0; i<this.length; i++){
+hash[this[i].toString()] = true;
+res.push(this[i]);
+}
+for(var i=0; i<array2.length; i++){
+var s = array2[i].toString();
+if (!hash[s]){
+hash[s] = true;
+res.push(array2[i]);
+}
+}
+return res;
+}
+Array.prototype.extendNoDuplicates = function(array2) {
+var hash = {};
+for (var i=0; i<this.length; i++){
+hash[this[i].toString()] = true;
+}
+for(var i=0; i<array2.length; i++){
+var s = array2[i].toString();
+if (!hash[s]){
+hash[s] = true;
+this.push(array2[i]);
+}
+}
+}
+Array.prototype.removeDuplicates = function() {
+var hash = {};
+var res = [];
+for (var i=0; i<this.length; i++){
+var s = this[i].toString();
+if (!hash[s]) {
+hash[s] = true;
+res.push(this[i]);
+}
+}
+return res;
+}
+Array.getArrayOfZeroes = function(length) {
+for (var i = 0, a = new Array(length); i < length;) a[i++] = 0;
+return a;
+}
+Array.getArrayOfNumbers = function(length) {
+for (var i = 0, a = new Array(length); i < length; i++) a[i] = i;
+return a;
+}
+Array.prototype.copy = function() {
+var result = [];
+for (var i=0; i<this.length; i++) result[i] = this[i];
+return result;
+}
+Array.prototype.copyDeep = function() {
+var result = [];
+for (var i=0; i<this.length; i++) {
+if (this[i].isArray) result[i] = this[i].copyDeep();
+else result[i] = this[i];
+}
+return result;
+}
+Array.prototype.equals = function(arr2) {
+if (this.length != arr2.length) return false;
+for (var i=0; i<this.length; i++) {
+if (this[i].isArray) {
+if (!arr2[i].isArray) return false;
+if (!this[i].equals(arr2[i])) return false;
+}
+else if (this[i] != arr2[i]) return false;
+}
+return true;
+}
+if (!Array.prototype.includes) {
+Array.prototype.includes = function(element) {
+for (var i=0; i<this.length; i++) {
+if (this[i] == element) return true;
+}
+return false;
+};
+}
+Object.values = Object.values || function(o) {
+return Object.keys(o).map(function(k){return o[k]})
+};
+Object.entries = Object.entries || function(obj) {
+var ownProps = Object.keys(obj);
+var i = ownProps.length;
+var res = new Array(i);
+while (i--) res[i] = [ownProps[i], obj[ownProps[i]]];
+return res;
+};
+if (!String.prototype.startsWith) {
+String.prototype.startsWith = function(search) {
+return this.substring(0, search.length) === search;
+}
+}
+if (!String.prototype.includes) {
+String.prototype.includes = function(sub) {
+return this.indexOf(sub) > -1;
+}
+}
+function Formula() {
+}
+Formula.prototype.toString = function() {
+if (this.operator && this.operator.match(/[∧↔∨→]/)) {
+return this.string.slice(1,-1);
+}
+return this.string;
+}
+Formula.prototype.equals = function(fla) {
+return this.string == fla.string;
+}
+Formula.prototype.negate = function() {
+return new NegatedFormula(this);
+}
+Formula.unifyTerms = function(terms1, terms2) {
+var unifier = [];
+var terms1 = terms1.copyDeep();
+var terms2 = terms2.copyDeep();
+var t1, t2;
+while (t1 = terms1.shift(), t2 = terms2.shift()) {
+if (t1 == t2) {
+continue;
+}
+if (t1.isArray && t2.isArray) {
+if (t1[0] != t2[0]) return false;
+for (var i=1; i<t1.length; i++) {
+terms1.push(t1[i]);
+terms2.push(t2[i]);
+}
+continue;
+}
+var t1Var = (t1[0] == 'ξ' || t1[0] == 'ζ');
+var t2Var = (t2[0] == 'ξ' || t2[0] == 'ζ');
+if (!t1Var && !t2Var) {
+return false;
+}
+if (!t1Var) {
+var temp = t1; t1 = t2; t2 = temp;
+}
+if (t2.isArray) {
+var terms, termss = [t2];
+while (terms = termss.shift()) {
+for (var i=0; i<terms.length; i++) {
+if (terms[i].isArray) termss.push(terms[i]);
+else if (terms[i] == t1) {
+return false;
+}
+}
+}
+}
+var terms, termss = [unifier, terms1, terms2];
+while (terms = termss.shift()) {
+for (var i=0; i<terms.length; i++) {
+if (terms[i].isArray) termss.push(terms[i]);
+else if (terms[i] == t1) terms[i] = t2;
+}
+}
+unifier.push(t1);
+unifier.push(t2);
+}
+return unifier;
+}
+Formula.prototype.nnf = function() {
+var op = this.operator || this.quantifier;
+if (!op) return this;
+switch (op) {
+case '∧' : case '∨' : {
+var sub1 = this.sub1.nnf();
+var sub2 = this.sub2.nnf();
+return new BinaryFormula(op, sub1, sub2);
+}
+case '→' : {
+var sub1 = this.sub1.negate().nnf();
+var sub2 = this.sub2.nnf();
+return new BinaryFormula('∨', sub1, sub2);
+}
+case '↔' : {
+var sub1 = new BinaryFormula('∧', this.sub1, this.sub2).nnf();
+var sub2 = new BinaryFormula('∧', this.sub1.negate(), this.sub2.negate()).nnf();
+return new BinaryFormula('∨', sub1, sub2);
+}
+case '∀' : case '∃' : {
+return new QuantifiedFormula(op, this.variable, this.matrix.nnf(),
+this.overWorlds);
+}
+case '□' : case '◇' : {
+return new ModalFormula(op, this.sub.nnf());
+}
+case '¬' : {
+var op2 = this.sub.operator || this.sub.quantifier;
+if (!op2) return this;
+switch (op2) {
+case '∧' : case '∨' : {
+var sub1 = this.sub.sub1.negate().nnf();
+var sub2 = this.sub.sub2.negate().nnf();
+var newOp = op2 == '∧' ? '∨' : '∧';
+return new BinaryFormula(newOp, sub1, sub2);
+}
+case '→' : {
+var sub1 = this.sub.sub1.nnf();
+var sub2 = this.sub.sub2.negate().nnf();
+return new BinaryFormula('∧', sub1, sub2);
+}
+case '↔' : {
+var sub1 = new BinaryFormula('∧', this.sub.sub1, this.sub.sub2.negate()).nnf();
+var sub2 = new BinaryFormula('∧', this.sub.sub1.negate(), this.sub.sub2).nnf();
+return new BinaryFormula('∨', sub1, sub2);
+}
+case '∀' : case '∃' : {
+var sub = this.sub.matrix.negate().nnf();
+return new QuantifiedFormula(op2=='∀' ? '∃' : '∀', this.sub.variable, sub,
+this.sub.overWorlds);
+}
+case '□' : case '◇' : {
+var sub = this.sub.sub.negate().nnf();
+return new ModalFormula(op2=='□' ? '◇' : '□', sub);
+}
+case '¬' : {
+return this.sub.sub.nnf();
+}
+}
+}
+}
+}
+Formula.prototype.removeQuantifiers = function() {
+if (this.matrix) return this.matrix.removeQuantifiers();
+if (this.sub1) {
+var nsub1 = this.sub1.quantifier ?
+this.sub1.matrix.removeQuantifiers() : this.sub1.removeQuantifiers();
+var nsub2 = this.sub2.quantifier ?
+this.sub2.matrix.removeQuantifiers() : this.sub2.removeQuantifiers();
+if (this.sub1 == nsub1 && this.sub2 == nsub2) return this;
+var res = new BinaryFormula(this.operator, nsub1, nsub2);
+return res;
+}
+return this;
+}
+Formula.prototype.alpha = function(n) {
+var f = this;
+if (f.operator == '∧') {
+return n == 1 ? f.sub1 : f.sub2;
+}
+if (f.sub.operator == '∨') {
+return n == 1 ? f.sub.sub1.negate() : f.sub.sub2.negate();
+}
+if (f.sub.operator == '→') {
+return n == 1 ? f.sub.sub1 : f.sub.sub2.negate();
+}
+}
+Formula.prototype.beta = function(n) {
+var f = this;
+if (f.operator == '∨') {
+return n == 1 ? f.sub1 : f.sub2;
+}
+if (f.operator == '→') {
+return n == 1 ? f.sub1.negate() : f.sub2;
+}
+if (f.operator == '↔') {
+return n == 1 ? new BinaryFormula('∧', f.sub1, f.sub2) :
+new BinaryFormula('∧', f.sub1.negate(), f.sub2.negate())
+}
+if (f.sub.operator == '∧') {
+return n == 1 ? f.sub.sub1.negate() : f.sub.sub2.negate();
+}
+if (f.sub.operator == '↔') {
+return n == 1 ? new BinaryFormula('∧', f.sub.sub1, f.sub.sub2.negate()) :
+new BinaryFormula('∧', f.sub.sub1.negate(), f.sub.sub2)
+}
+}
+function AtomicFormula(predicate, terms) {
+this.type = 'literal';
+this.predicate = predicate;
+this.terms = terms;
+if (this.predicate == '=') {
+this.string = AtomicFormula.terms2string([this.terms[0]])+'='+
+AtomicFormula.terms2string([this.terms[1]]);
+}
+else {
+this.string = predicate + AtomicFormula.terms2string(terms);
+}
+}
+AtomicFormula.terms2string = function(list, separator) {
+return list.map(function(term) {
+if (term.isArray) {
+var sublist = term.copy();
+var funcsym = sublist.shift();
+return funcsym+'('+AtomicFormula.terms2string(sublist,',')+')';
+}
+else return term;
+}).join(separator || '');
+}
+AtomicFormula.prototype = Object.create(Formula.prototype);
+AtomicFormula.prototype.key = function() {
+return this.predicate + this.terms.toString();
+}
+AtomicFormula.prototype.substitute = function(origTerm, newTerm, shallow) {
+if (typeof(origTerm) == 'string' && this.string.indexOf(origTerm) == -1) {
+if (this.predicate != '=' || this.terms.length <= 2) {
+return this;
+}
+}
+var newTerms = Formula.substituteInTerms(this.terms, origTerm, newTerm, shallow);
+if (!this.terms.equals(newTerms)) {
+return new AtomicFormula(this.predicate, newTerms);
+}
+else return this;
+}
+Formula.substituteInTerm = function(term, origTerm, newTerm) {
+if (term == origTerm) return newTerm;
+if (term.isArray) return Formula.substituteInTerms(term, origTerm, newTerm);
+return term;
+}
+Formula.substituteInTerms = function(terms, origTerm, newTerm, shallow) {
+var newTerms = [];
+for (var i=0; i<terms.length; i++) {
+var term = terms[i];
+if (term.toString() == origTerm.toString()) newTerms.push(newTerm);
+else if (term.isArray && !shallow) {
+newTerms.push(Formula.substituteInTerms(term, origTerm, newTerm));
+}
+else newTerms.push(term);
+}
+return newTerms;
+}
+function QuantifiedFormula(quantifier, variable, matrix, overWorlds) {
+this.quantifier = quantifier;
+this.variable = variable;
+this.matrix = matrix;
+this.overWorlds = overWorlds;
+if (overWorlds) {
+this.type = quantifier == '∀' ? 'modalGamma' : 'modalDelta';
+}
+else {
+this.type = quantifier == '∀' ? 'gamma' : 'delta';
+}
+this.string = quantifier + variable + matrix.string;
+}
+QuantifiedFormula.prototype = Object.create(Formula.prototype);
+QuantifiedFormula.prototype.substitute = function(origTerm, newTerm, shallow) {
+if (this.variable == origTerm) return this;
+var nmatrix = this.matrix.substitute(origTerm, newTerm, shallow);
+if (nmatrix == this.matrix) return this;
+return new QuantifiedFormula(this.quantifier, this.variable, nmatrix, this.overWorlds);
+}
+function BinaryFormula(operator, sub1, sub2) {
+this.operator = operator;
+this.sub1 = sub1;
+this.sub2 = sub2;
+this.type = operator == '∧' ? 'alpha' : 'beta';
+var space = sub1.string.length+sub2.string.length > 3 ? ' ' : '';
+this.string = '(' + sub1.string + space + operator + space + sub2.string + ')';
+}
+BinaryFormula.prototype = Object.create(Formula.prototype);
+BinaryFormula.prototype.substitute = function(origTerm, newTerm, shallow) {
+var nsub1 = this.sub1.substitute(origTerm, newTerm, shallow);
+var nsub2 = this.sub2.substitute(origTerm, newTerm, shallow);
+if (this.sub1 == nsub1 && this.sub2 == nsub2) return this;
+return new BinaryFormula(this.operator, nsub1, nsub2);
+}
+function ModalFormula(operator, sub) {
+this.operator = operator;
+this.sub = sub;
+this.type = operator == '□' ? 'modalGamma' : 'modalDelta';
+this.string = operator + sub.string;
+}
+ModalFormula.prototype = Object.create(Formula.prototype);
+ModalFormula.prototype.substitute = function(origTerm, newTerm, shallow) {
+var nsub = this.sub.substitute(origTerm, newTerm, shallow);
+if (this.sub == nsub) return this;
+return new ModalFormula(this.operator, nsub);
+}
+function NegatedFormula(sub) {
+this.operator = '¬';
+this.sub = sub;
+this.type = NegatedFormula.computeType(sub);
+this.string = '¬' + sub.string;
+}
+NegatedFormula.computeType = function(sub) {
+if (sub.operator == '¬') return 'doublenegation';
+switch (sub.type) {
+case 'literal': { return 'literal'; }
+case 'alpha': { return 'beta'; }
+case 'beta': { return sub.operator == '↔' ? 'beta' : 'alpha'; }
+case 'gamma': { return 'delta'; }
+case 'delta': { return 'gamma'; }
+case 'modalGamma': { return 'modalBeta'; }
+case 'modalDelta': { return 'modalGamma'; }
+}
+}
+NegatedFormula.prototype = Object.create(Formula.prototype);
+NegatedFormula.prototype.key = function() {
+return '¬' + this.sub.key();
+}
+NegatedFormula.prototype.substitute = function(origTerm, newTerm, shallow) {
+var nsub = this.sub.substitute(origTerm, newTerm, shallow);
+if (this.sub == nsub) return this;
+return new NegatedFormula(nsub);
+}
+function Parser() {
+this.symbols = [];
+this.expressionType = {};
+this.arities = {};
+this.isModal = false;
+this.isPropositional = true;
+this.hasEquality = false;
+this.functionArgTypes = {};
+this.predicateArgTypes = {};
+}
+Parser.prototype.copy = function() {
+var nparser = new Parser(true);
+nparser.symbols = this.symbols.copy();
+for (var i=0; i<this.symbols.length; i++) {
+var sym = this.symbols[i];
+nparser.expressionType[sym] = this.expressionType[sym];
+nparser.arities[sym] = this.arities[sym];
+}
+nparser.isModal = this.isModal;
+nparser.isPropositional = this.isPropositional;
+nparser.hasEquality = this.hasEquality;
+nparser.R = this.R;
+nparser.w = this.w;
+nparser.functionArgTypes = {};
+for (var sym in this.functionArgTypes) {
+nparser.functionArgTypes[sym] = this.functionArgTypes[sym].slice();
+}
+nparser.predicateArgTypes = {};
+for (var sym in this.predicateArgTypes) {
+nparser.predicateArgTypes[sym] = this.predicateArgTypes[sym].slice();
+}
+return nparser;
+}
+Parser.prototype.registerExpression = function(ex, exType, arity) {
+if (!this.expressionType[ex]) this.symbols.push(ex);
+else if (this.expressionType[ex] != exType) {
+throw "Don't use '"+ex+"' as both "+this.expressionType[ex]+" and "+exType+".";
+}
+this.expressionType[ex] = exType;
+this.arities[ex] = arity;
+}
+Parser.prototype.getSymbols = function(expressionType) {
+var res = [];
+for (var i=0; i<this.symbols.length; i++) {
+var s = this.symbols[i];
+if (this.expressionType[s].indexOf(expressionType) > -1) res.push(s);
+}
+return res;
+}
+Parser.prototype.getNewSymbol = function(candidates, expressionType, arity) {
+var candidates = candidates.split('');
+for (var i=0; i<candidates.length; i++) {
+var sym = candidates[i];
+if (!this.expressionType[sym]) {
+this.registerExpression(sym, expressionType, arity);
+return sym;
+}
+candidates.push(candidates[0]+(i+2));
+}
+}
+Parser.prototype.getNewConstant = function() {
+return this.getNewSymbol('abcdefghijklmno', 'individual constant', 0);
+}
+Parser.prototype.getNewVariable = function() {
+return this.getNewSymbol('xyzwvutsr', 'variable', 0);
+}
+Parser.prototype.getNewFunctionSymbol = function(arity, isWorldFunction) {
+var stype = arity+"-ary function symbol"+(isWorldFunction ? " for worlds" : "");
+return this.getNewSymbol('fghijklmn', stype, arity);
+}
+Parser.prototype.getNewWorldVariable = function() {
+return this.getNewSymbol('wvutsr', 'world variable', 0);
+}
+Parser.prototype.getNewWorldName = function() {
+return this.getNewSymbol('vutsr', 'world constant', 0);
+}
+Parser.prototype.getVariables = function(formula) {
+const vars = new Set();
+const extractVariables = (formula) => {
+if (formula.sub) {
+extractVariables(formula.sub);
+}
+else if (formula.matrix) {
+extractVariables(formula.matrix);
+}
+else if (formula.sub1) {
+extractVariables(formula.sub1);
+extractVariables(formula.sub2);
+}
+else {
+var terms = formula.isArray ? formula : formula.terms;
+for (var i=0; i<terms.length; i++) {
+if (terms[i].isArray) {
+extractVariables(terms[i]);
+}
+else if (this.expressionType[terms[i]].indexOf('variable') > -1) {
+vars.add(terms[i]);
+}
+}
+}
+}
+extractVariables(formula);
+return Array.from(vars);
+}
+Parser.prototype.isTseitinLiteral = function(formula) {
+return this.expressionType[formula.predicate || formula.sub.predicate] == 'tseitin predicate';
+}
+Parser.prototype.initModality = function() {
+for (var i=0; i<this.symbols.length; i++) {
+var sym = this.symbols[i];
+if (this.expressionType[sym].indexOf('predicate') > -1) {
+this.arities[sym] += 1;
+}
+}
+this.R = this.getNewSymbol('Rrℜ', '2-ary predicate', 2);
+this.w = this.getNewSymbol('wvur', 'world constant', 0);
+}
+Parser.prototype.translateFromModal = function(formula, worldVariable) {
+if (!worldVariable) {
+if (!this.w) this.initModality();
+worldVariable = this.w;
+}
+if (formula.terms) {
+var nterms = formula.terms.copyDeep();
+nterms.push(worldVariable);
+return new AtomicFormula(formula.predicate, nterms);
+}
+if (formula.quantifier) {
+var nmatrix = this.translateFromModal(formula.matrix, worldVariable);
+return new QuantifiedFormula(formula.quantifier, formula.variable, nmatrix);
+}
+if (formula.sub1) {
+var nsub1 = this.translateFromModal(formula.sub1, worldVariable);
+var nsub2 = this.translateFromModal(formula.sub2, worldVariable);
+return new BinaryFormula(formula.operator, nsub1, nsub2);
+}
+if (formula.operator == '¬') {
+var nsub = this.translateFromModal(formula.sub, worldVariable);
+return new NegatedFormula(nsub);
+}
+if (formula.operator == '□') {
+var newWorldVariable = this.getNewWorldVariable();
+var wRv = new AtomicFormula(this.R, [worldVariable, newWorldVariable])
+var nsub = this.translateFromModal(formula.sub, newWorldVariable);
+var nmatrix = new BinaryFormula('→', wRv, nsub);
+return new QuantifiedFormula('∀', newWorldVariable, nmatrix, true);
+}
+if (formula.operator == '◇') {
+var newWorldVariable = this.getNewWorldVariable();
+var wRv = new AtomicFormula(this.R, [worldVariable, newWorldVariable])
+var nsub = this.translateFromModal(formula.sub, newWorldVariable);
+var nmatrix = new BinaryFormula('∧', wRv, nsub);
+return new QuantifiedFormula('∃', newWorldVariable, nmatrix, true)
+}
+}
+Parser.prototype.stripAccessibilityClauses = function(formula) {
+if (formula.quantifier) {
+var nmatrix = this.stripAccessibilityClauses(formula.matrix);
+if (nmatrix == formula.matrix) return formula;
+return new QuantifiedFormula(formula.quantifier, formula.variable, nmatrix);
+}
+if (formula.sub1) {
+if ((formula.sub1.sub && formula.sub1.sub.predicate == this.R) ||
+(formula.sub1.predicate == this.R)) {
+return this.stripAccessibilityClauses(formula.sub2);
+}
+var nsub1 = this.stripAccessibilityClauses(formula.sub1);
+var nsub2 = this.stripAccessibilityClauses(formula.sub2);
+if (formula.sub1 == nsub1 && formula.sub2 == nsub2) return formula;
+return new BinaryFormula(formula.operator, nsub1, nsub2);
+}
+if (formula.operator == '¬') {
+return formula;
+}
+else {
+return formula;
+}
+}
+Parser.prototype.translateToModal = function(formula) {
+if (formula.terms && formula.predicate == this.R) {
+return formula;
+}
+if (formula.terms) {
+var nterms = formula.terms.copyDeep();
+var worldlabel = nterms.pop();
+var res = new AtomicFormula(formula.predicate, nterms);
+res.world = worldlabel;
+}
+else if (formula.quantifier && this.expressionType[formula.variable] == 'world variable') {
+var prejacent = formula.matrix.sub2;
+var op = formula.quantifier == '∃' ? '◇' : '□';
+var res = new ModalFormula(op, this.translateToModal(prejacent));
+res.world = formula.matrix.sub1.terms[0];
+}
+else if (formula.quantifier) {
+var nmatrix = this.translateToModal(formula.matrix);
+var res = new QuantifiedFormula(formula.quantifier, formula.variable, nmatrix);
+res.world = nmatrix.world;
+}
+else if (formula.sub1) {
+var nsub1 = this.translateToModal(formula.sub1);
+var nsub2 = this.translateToModal(formula.sub2);
+var res = new BinaryFormula(formula.operator, nsub1, nsub2);
+res.world = nsub2.world;
+}
+else if (formula.operator == '¬') {
+var nsub = this.translateToModal(formula.sub);
+var res = new NegatedFormula(nsub);
+res.world = nsub.world;
+}
+return res;
+}
+Parser.prototype.parseInput = function(str) {
+this.input = str;
+var parts = str.split('|=');
+if (parts.length > 2) {
+throw "You can't use more than one turnstile.";
+}
+var premises = [];
+var conclusion = this.parseFormula(parts[parts.length-1]);
+if (conclusion.isArray) {
+throw parts[parts.length-1]+" looks like a list; use either conjunction or disjunction instead of the comma.";
+}
+if (parts.length == 2 && parts[0] != '') {
+premises = this.parseFormula(parts[0]);
+if (!premises.isArray) premises = [premises];
+}
+if (this.isModal) this.initModality();
+return [premises, conclusion];
+}
+Parser.prototype.parseFormula = function(str) {
+var boundVars = arguments[1] ? arguments[1].slice() : [];
+if (!arguments[1]) {
+str = this.tidyFormula(str);
+}
+var temp = this.hideSubStringsInParens(str);
+var nstr = temp[0];
+var subStringsInParens = temp[1];
+if (nstr == '%0') {
+return this.parseFormula(str.replace(/^\((.*)\)$/, "$1"), arguments[1]);
+}
+var reTest = nstr.match(/,/) || nstr.match(/↔/) || nstr.match(/→/)  || nstr.match(/∨/) || nstr.match(/∧/);
+if (reTest) {
+var op = reTest[0];
+if (op == ',') nstr = nstr.replace(/,/g, '%split');
+else nstr = nstr.replace(op, "%split");
+for (var i=0; i<subStringsInParens.length; i++) {
+nstr = nstr.replace("%"+i, subStringsInParens[i]);
+}
+var substrings = nstr.split("%split");
+if (!substrings[1]) {
+throw "argument missing for operator "+op+" in "+str+".";
+}
+var subFormulas = [];
+for (var i=0; i<substrings.length; i++) {
+subFormulas.push(this.parseFormula(substrings[i], boundVars));
+}
+if (op == ',') {
+if (arguments[1]) {
+throw "I don't understand '"+str+"' (looks like a list of formulas).";
+}
+return subFormulas;
+}
+return new BinaryFormula(op, subFormulas[0], subFormulas[1]);
+}
+var reTest = nstr.match(/^(¬|□|◇)/);
+if (reTest) {
+var op = reTest[1];
+var sub = this.parseFormula(str.substr(1), boundVars);
+if (op == '¬') return new NegatedFormula(sub);
+this.isModal = true;
+return new ModalFormula(op, sub);
+}
+reTest = /^(∀|∃)([^\d\(\),%]\d*)/.exec(str);
+if (reTest && reTest.index == 0) {
+var quantifier = reTest[1];
+var variable = reTest[2];
+if (!str.substr(reTest[0].length)) {
+throw "There is nothing in the scope of "+str+".";
+}
+if (this.expressionType[variable] != 'world variable') {
+this.registerExpression(variable, 'variable', 0);
+}
+boundVars.push(variable);
+this.isPropositional = false;
+var sub = this.parseFormula(str.substr(reTest[0].length), boundVars);
+return new QuantifiedFormula(quantifier, variable, sub);
+}
+m = str.match(/[□◇∃∀¬]/);
+if (m) {
+throw "I don't understand '"+m[0]+"' in '"+str+"'. Missing operator?";
+}
+var ostr = str;
+str = str.replace(/^(.+)=(.+)$/, '=$1$2');
+var predicateRE = this.readNumeralsAsSubscripts(str) ? /^=|^[\w$]\d*/ : /^[\w$=]/;
+reTest = predicateRE.exec(str);
+if (reTest && reTest.index == 0) {
+try {
+var predicate = reTest[0];
+var termstr = str.substr(predicate.length);
+var terms = this.parseTerms(termstr, boundVars) || [];
+if (termstr) {
+var predicateType = terms.length+"-ary predicate";
+if (predicate != this.R) this.isPropositional = false;
+}
+else {
+var predicateType = "proposition letter (0-ary predicate)";
+}
+if (predicate == '=') {
+this.hasEquality = true;
+if (terms.length != 2) {
+throw "The identity predicate requires two arguments.";
+}
+}
+this.registerExpression(predicate, predicateType, terms.length);
+return new AtomicFormula(predicate, terms);
+}
+catch (e) {
+throw e+"\n(I'm assuming '"+ostr+"' is meant to be an atomic formula with predicate '"+predicate+"'.)";
+}
+}
+throw "Parse Error.\n'" + str + "' is not a well-formed formula.";
+}
+Parser.prototype.hideSubStringsInParens = function(str) {
+var subStringsInParens = [];
+var parenDepth = 0;
+var storingAtIndex = -1;
+var nstr = "";
+for (var i=0; i<str.length; i++) {
+if (str.charAt(i) == "(") {
+parenDepth++;
+if (parenDepth == 1) {
+storingAtIndex = subStringsInParens.length;
+subStringsInParens[storingAtIndex] = "";
+nstr += "%" + storingAtIndex;
+}
+}
+if (storingAtIndex == -1) nstr += str.charAt(i);
+else subStringsInParens[storingAtIndex] += str.charAt(i);
+if (str.charAt(i) == ")") {
+parenDepth--;
+if (parenDepth == 0) storingAtIndex = -1;
+}
+}
+return [nstr, subStringsInParens];
+}
+Parser.prototype.tidyFormula = function(str) {
+str = str.replace(/\s/g, '');
+str = str.replace('[', '(').replace(']', ')');
+this.checkBalancedParentheses(str);
+str = str.replace(/\(([∀∃]\w\d*)\)/g, '$1');
+var m =str.match(/[^\w\d\(\)∀∃□◇♢∧↔∨¬→,=+\-*ξω$]/);
+if (m) throw("I don't understand the symbol '"+m[0]+"'.");
+return str;
+}
+Parser.prototype.checkBalancedParentheses = function(str) {
+var openings = str.split('(').length - 1;
+var closings = str.split(')').length - 1;
+if (openings != closings) {
+throw "unbalanced parentheses: "+openings+" opening parentheses, "+closings+" closing.";
+}
+}
+Parser.prototype.readNumeralsAsSubscripts = function(str) {
+if (this.input) str = this.input;
+if (str.search(/\d/) == -1) return true;
+return str.search(/[\wξω$]\d/) > -1 ? true : false;
+}
+Parser.prototype.parseAccessibilityFormula = function(str) {
+str = str.replace(/R/g, this.R);
+var matches = str.match(/[∀∃]./g);
+for (var i=0; i<matches.length; i++) {
+var v = matches[i][1];
+if (this.expressionType[v] && this.expressionType[v] != 'world variable') {
+var re = new RegExp(v, 'g');
+str = str.replace(re, this.getNewWorldVariable());
+}
+else {
+this.registerExpression(v, 'world variable', 0);
+}
+}
+var isPropositional = this.isPropositional;
+var formula = this.parseFormula(str);
+this.isPropositional = isPropositional;
+return formula;
+}
+Parser.prototype.parseTerms = function(str, boundVars) {
+if (!str) return [];
+var result = [];
+str = str.replace(/^\((.+)\)$/, "$1");
+do {
+var termRE = this.readNumeralsAsSubscripts(str) ? /^[\wξω+*-]\d*/ : /^[\wξω+*-]/;
+var reTest = termRE.exec(str);
+if (!reTest || reTest.index != 0) {
+throw "I expected a (sequence of) term(s) instead of '" + str + "'.";
+}
+var nextTerm = reTest[0];
+str = str.substr(reTest[0].length);
+if (str.indexOf("(") == 0) {
+var args = "", openParens = 0, spos = 0;
+do {
+args += str.charAt(spos);
+if (str.charAt(spos) == "(") openParens++;
+else if (str.charAt(spos) == ")") openParens--;
+spos++;
+} while (openParens && spos < str.length);
+nextTerm = [nextTerm].concat(this.parseTerms(args, boundVars));
+var arity = (nextTerm.length - 1);
+this.registerExpression(reTest[0], arity+"-ary function symbol", arity);
+str = str.substr(args.length);
+}
+else if (!boundVars.includes(nextTerm)) {
+this.registerExpression(nextTerm, 'individual constant', 0);
+}
+result.push(nextTerm);
+if (str.indexOf(",") == 0) str = str.substr(1);
+} while (str.length > 0);
+return result;
+}
+function Prover(initFormulas, parser, accessibilityConstraints) {
+parser = parser.copy();
+this.parser = parser;
+this.initFormulas = initFormulas;
+this.initFormulasNonModal = initFormulas;
+this.accessibilityRules = [];
+if (parser.isModal) {
+this.initFormulasNonModal = initFormulas.map(function(f) {
+return parser.translateFromModal(f);
+});
+if (accessibilityConstraints) {
+this.s5 = accessibilityConstraints.includes('universality');
+if (!this.s5) {
+this.accessibilityRules = accessibilityConstraints.map(function(s) {
+return Prover[s];
+});
+}
+}
+}
+this.initFormulasNNF = this.initFormulasNonModal.map(function(f){
+return f.nnf();
+});
+this.pauseLength = 5;
+this.computationLength = 20;
+this.step = 0;
+this.tree = new Tree(this);
+this.depthLimit = 2;
+this.alternatives = [this.tree];
+this.curAlternativeIndex = 0;
+this.tree.addInitNodes(this.initFormulasNNF)
+var mfParser = parser.copy();
+if (accessibilityConstraints) {
+var u = accessibilityConstraints.includes('universality'),
+r = accessibilityConstraints.includes('reflexivity'),
+s = accessibilityConstraints.includes('symmetry'),
+t = accessibilityConstraints.includes('transitivity'),
+e = accessibilityConstraints.includes('euclidity');
+var implied = {
+reflexivity:  u,
+symmetry:     u || (r && e),
+transitivity: u || (e && (s || r)),
+euclidity:    u || (s && t),
+seriality:    u || r
+};
+var mfConstraints = accessibilityConstraints.filter(function(c) {
+return !implied[c];
+});
+var mfS5 = u || (r && (s || e) && (t || e));
+var accFlas = [];
+if (!mfS5) {
+var name2fla = {
+"universality": "∀v∀uRvu",
+"reflexivity": "∀vRvv",
+"symmetry": "∀v∀u(Rvu→Ruv)",
+"transitivity": "∀v∀u∀t(Rvu→(Rut→Rvt))",
+"euclidity": "∀v∀u∀t(Rvu→(Rvt→Rut))",
+"seriality": "∀v∃uRvu"
+};
+accFlas = mfConstraints.map(function(c) {
+return mfParser.parseAccessibilityFormula(name2fla[c]).nnf();
+});
+}
+this.modelfinder = new ModelFinder(this.initFormulasNNF, mfParser, accFlas, mfS5);
+}
+else {
+this.modelfinder = new ModelFinder(this.initFormulasNNF, mfParser);
+}
+this.counterModel = null;
+this.start = function() {
+this.proverDuration = 0;
+this.modelfinderDuration = 0;
+this.lastBreakTime = performance.now();
+this.nextStep();
+};
+this.stop = function() {
+this.stopTimeout = true;
+};
+this.onfinished = function(treeClosed) {};
+this.status = function(str) {};
+}
+Prover.prototype.nextStep = function() {
+this.step++;
+if (this.step == 5000) {
+var xhr = new XMLHttpRequest();
+xhr.open("POST", "savelog.php", true);
+xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+var data = "data=" + encodeURIComponent(location.href);
+xhr.send(data);
+}
+this.status('step '+this.step+' alternative '+this.curAlternativeIndex+', '
++this.tree.numNodes+' nodes, model size '
++this.modelfinder.model.domain.length
++(this.tree.parser.isModal ? '/'+this.modelfinder.model.worlds.length : ''));
+var t0 = performance.now();
+if (this.proverDuration <= this.modelfinderDuration) {
+if (this.nextTreeStep()) {
+return this.onfinished(1);
+}
+this.proverDuration += performance.now() - t0;
+}
+else {
+if (this.modelfinder.nextStep()) {
+this.counterModel = this.modelfinder.model;
+return this.onfinished(0);
+}
+this.modelfinderDuration += performance.now() - t0;
+}
+var timeSinceBreak = performance.now() - this.lastBreakTime;
+if (this.stopTimeout) {
+this.stopTimeout = false;
+}
+else if (this.pauseLength && timeSinceBreak > this.computationLength) {
+setTimeout(function(){
+this.lastBreakTime = performance.now();
+this.nextStep();
+}.bind(this), this.pauseLength+this.tree.numNodes/1000);
+}
+else {
+this.nextStep();
+}
+}
+Prover.prototype.nextTreeStep = function() {
+if (this.tree.openBranches.length == 0) {
+return true;
+}
+if (this.limitReached()) {
+if (this.curAlternativeIndex < this.alternatives.length-1) {
+this.curAlternativeIndex++;
+}
+else {
+this.depthLimit += 2 + Math.floor(this.step/500);
+this.curAlternativeIndex = 0;
+}
+this.tree = this.alternatives[this.curAlternativeIndex];
+return this.nextTreeStep();
+}
+var todo = this.tree.openBranches[0].todoList.shift();
+if (todo) {
+todo.nextRule(this.tree.openBranches[0], todo.args);
+}
+else if (this.alternatives.length) {
+this.discardCurrentAlternative();
+}
+return false;
+}
+Prover.prototype.limitReached = function() {
+var complexity = this.tree.getNumNodes() - this.tree.priority;
+if (this.tree.openBranches[0].todoList[0] &&
+this.tree.openBranches[0].todoList[0].nextRule == Prover.equalityReasoner) {
+if (!this.equalityComputationStep) this.equalityComputationStep = 1;
+else if (++this.equalityComputationStep == 100) {
+this.equalityComputationStep = 0;
+return true;
+}
+}
+return complexity >= this.depthLimit;
+}
+Prover.prototype.useTree = function(tree, index) {
+if (index !== undefined) {
+this.alternatives.splice(index, 0, tree);
+this.curAlternativeIndex = index;
+}
+else {
+this.alternatives[this.curAlternativeIndex] = tree;
+}
+this.tree = tree
+}
+Prover.prototype.switchToAlternative = function(altTree) {
+this.curAlternativeIndex = this.alternatives.indexOf(altTree);
+this.tree = this.alternatives[this.curAlternativeIndex];
+}
+Prover.prototype.storeAlternatives = function(altTrees) {
+var insertPosition = this.curAlternativeIndex+1;
+for (var i=0; i<altTrees.length; i++) {
+this.alternatives.splice(insertPosition, 0, altTrees[i]);
+this.pruneAlternatives(altTrees[i]);
+if (!altTrees[i].removed) {
+insertPosition++;
+}
+}
+}
+Prover.prototype.pruneAlternatives = function(tree) {
+for (var i=0; i<this.alternatives.length; i++) {
+if (this.alternatives[i] == tree) continue;
+var keepWhich = this.keepWhichTree(tree, this.alternatives[i]);
+var keepTree = keepWhich[0];
+var keepAlt = keepWhich[1];
+if (!keepTree) {
+this.removeAlternative(this.alternatives.indexOf(tree));
+return;
+}
+else if (!keepAlt) {
+this.removeAlternative(i);
+i--;
+}
+}
+}
+Prover.prototype.keepWhichTree = function(tree, altTree) {
+if (altTree.string == tree.string) {
+if (tree.openBranches[0].todoList[0].nextRule != altTree.openBranches[0].todoList[0].nextRule ||
+tree.openBranches[0].todoList[0].args != altTree.openBranches[0].todoList[0].args) {
+return [true, true];
+}
+else if (tree.numNodes < altTree.numNodes) {
+return [true, false];
+}
+else {
+return [false, true];
+}
+}
+var tol = tree.openBranches.length;
+var atol = altTree.openBranches.length;
+if (tol == 0) {
+return [true, false];
+}
+if (atol == 0) {
+return [false, true];
+}
+var offset = 1;
+while (tree.openBranches[tol-offset].string == altTree.openBranches[atol-offset].string) {
+if (offset == tol) {
+return [true, false];
+}
+else if (offset == atol) {
+return [false, true];
+}
+offset++;
+}
+tbranch = tree.openBranches[tol-offset];
+atbranch = altTree.openBranches[atol-offset];
+if ((offset == atol || offset == tol) &&
+tbranch.string.startsWith(atbranch.string) &&
+atbranch.todoList[0].nextRule != Prover.equalityReasoner) {
+return [true, false];
+}
+else if ((offset == tol || offset == atol) &&
+atbranch.string.startsWith(tbranch.string) &&
+tbranch.todoList[0].nextRule != Prover.equalityReasoner) {
+return [false, true];
+}
+return [true, true];
+}
+Prover.prototype.removeAlternative = function(index) {
+this.alternatives[index].removed = true;
+if (index == this.curAlternativeIndex) {
+this.discardCurrentAlternative();
+}
+else {
+this.alternatives.splice(index, 1);
+if (index < this.curAlternativeIndex) {
+this.curAlternativeIndex--;
+}
+}
+}
+Prover.prototype.discardCurrentAlternative = function() {
+this.alternatives.splice(this.curAlternativeIndex, 1);
+if (this.curAlternativeIndex == this.alternatives.length) {
+this.curAlternativeIndex = 0;
+}
+if (this.alternatives.length) {
+this.tree = this.alternatives[this.curAlternativeIndex];
+}
+}
+Prover.alpha = function(branch, nodeList) {
+var node = nodeList[0];
+var subnode1 = new Node(node.formula.sub1, Prover.alpha, nodeList);
+var subnode2 = new Node(node.formula.sub2, Prover.alpha, nodeList);
+branch.addNode(subnode1, 'addEvenIfDuplicate');
+branch.addNode(subnode2, 'addEvenIfDuplicate');
+branch.tryClose(subnode1);
+if (!branch.closed) branch.tryClose(subnode2);
+}
+Prover.alpha.priority = 1;
+Prover.alpha.toString = function() { return 'alpha' }
+Prover.beta = function(branch, nodeList) {
+var node = nodeList[0];
+var newbranch = branch.copy();
+branch.tree.openBranches.unshift(newbranch);
+var re = /[∧∨↔→∀∃□◇]/g;
+var complexity1 = (node.formula.sub1.string.match(re) || []).length;
+var complexity2 = (node.formula.sub2.string.match(re) || []).length;
+if (complexity2 < complexity1) {
+var subnode1 = new Node(node.formula.sub1, Prover.beta, nodeList);
+var subnode2 = new Node(node.formula.sub2, Prover.beta, nodeList);
+}
+else {
+var subnode2 = new Node(node.formula.sub1, Prover.beta, nodeList);
+var subnode1 = new Node(node.formula.sub2, Prover.beta, nodeList);
+}
+branch.addNode(subnode1, 'addEvenIfDuplicate');
+newbranch.addNode(subnode2, 'addEvenIfDuplicate');
+branch.tryClose(subnode1, 'dontPruneAlternatives');
+newbranch.tryClose(subnode2);
+}
+Prover.beta.priority = 9;
+Prover.beta.toString = function() { return 'beta' }
+Prover.gamma = function(branch, nodeList, matrix) {
+var fromModalGamma = (matrix != undefined);
+var node = nodeList[0];
+var newVariable = branch.newVariable(matrix);
+var matrix = matrix || node.formula.matrix;
+var newFormula = matrix.substitute(node.formula.variable, newVariable);
+var newNode = new Node(newFormula, Prover.gamma, nodeList);
+newNode.instanceTerm = newVariable;
+branch.addNode(newNode);
+branch.tryClose(newNode);
+if (!fromModalGamma && newNode.type != 'gamma') {
+var outer = node;
+while (outer.fromRule == Prover.gamma) outer = outer.fromNodes[0];
+var priority = 9;
+branch.todoList.push(Prover.makeTodoItem(Prover.gamma, [outer], priority));
+}
+}
+Prover.gamma.priority = 8;
+Prover.gamma.toString = function() { return 'gamma' }
+Prover.modalGamma = function(branch, nodeList) {
+var node = nodeList[0];
+if (branch.tree.prover.s5) {
+branch.todoList.push(Prover.makeTodoItem(Prover.modalGamma, nodeList));
+return Prover.gamma(branch, nodeList, node.formula.matrix.sub2);
+}
+var wRx = node.formula.matrix.sub1.sub;
+OUTERLOOP:
+for (var i=0; i<branch.literals.length; i++) {
+var wRy = branch.literals[i].formula;
+if (wRy.predicate == wRx.predicate && wRy.terms[0] == wRx.terms[0]) {
+for (var j=0; j<branch.nodes.length; j++) {
+if (branch.nodes[j].fromRule == Prover.modalGamma &&
+branch.nodes[j].fromNodes[0] == node &&
+branch.nodes[j].fromNodes[1] == branch.literals[i]) {
+continue OUTERLOOP;
+}
+}
+var modalMatrix = node.formula.matrix.sub2;
+var v = wRy.terms[1];
+var newFormula = modalMatrix.substitute(node.formula.variable, v);
+var newNode = new Node(newFormula, Prover.modalGamma, [node, branch.literals[i]]);
+newNode.instanceTerm = v;
+if (branch.addNode(newNode)) {
+branch.tryClose(newNode);
+branch.todoList.unshift(Prover.makeTodoItem(Prover.modalGamma, nodeList));
+return;
+}
+}
+}
+branch.todoList.push(Prover.makeTodoItem(Prover.modalGamma, nodeList));
+}
+Prover.modalGamma.priority = 8;
+Prover.modalGamma.toString = function() { return 'modalGamma' }
+Prover.delta = function(branch, nodeList, matrix) {
+var node = nodeList[0];
+var fla = node.formula;
+var funcSymbol = branch.tree.newFunctionSymbol(matrix);
+if (branch.freeVariables.length > 0) {
+if (branch.tree.prover.s5) {
+var skolemTerm = branch.freeVariables.filter(function(v) {
+return v[0] == (matrix ? 'ζ' : 'ξ');
+});
+}
+else {
+var skolemTerm = branch.freeVariables.copy();
+}
+skolemTerm.unshift(funcSymbol);
+}
+else {
+var skolemTerm = funcSymbol;
+}
+var matrix = matrix || node.formula.matrix;
+var newFormula = matrix.substitute(node.formula.variable, skolemTerm);
+var newNode = new Node(newFormula, Prover.delta, nodeList);
+newNode.instanceTerm = skolemTerm;
+branch.addNode(newNode);
+branch.tryClose(newNode);
+}
+Prover.delta.priority = 2;
+Prover.delta.toString = function() { return 'delta' }
+Prover.modalDelta = function(branch, nodeList) {
+var node = nodeList[0];
+if (branch.tree.prover.s5) {
+return Prover.delta(branch, nodeList, node.formula.matrix.sub2);
+}
+var fla = node.formula;
+var newWorldName = branch.tree.newWorldName();
+var fla1 = node.formula.matrix.sub1.substitute(node.formula.variable, newWorldName);
+var fla2 = node.formula.matrix.sub2.substitute(node.formula.variable, newWorldName);
+var newNode1 = new Node(fla1, Prover.modalDelta, nodeList);
+var newNode2 = new Node(fla2, Prover.modalDelta, nodeList);
+newNode2.instanceTerm = newWorldName;
+branch.addNode(newNode1);
+branch.addNode(newNode2);
+branch.tryClose(newNode2);
+}
+Prover.modalDelta.priority = 2;
+Prover.modalDelta.toString = function() { return 'modalDelta' }
+Prover.literal = function(branch, nodeList) {
+var tree = branch.tree;
+var prover = tree.prover;
+var unifiers = [];
+for (var i=0; i<nodeList.length; i++) {
+unifiers.extendNoDuplicates(branch.getClosingUnifiers(nodeList[i]));
+}
+var altTrees = [];
+var localTree = null;
+for (var i=0; i<unifiers.length; i++) {
+var altTree = tree.copy();
+altTree.applySubstitution(unifiers[i]);
+altTree.closeCloseableBranches();
+if (altTree.openBranches.length == 0) {
+prover.useTree(altTree);
+return;
+}
+if (!localTree) {
+if (!branch.unifierAffectsOtherBranches(unifiers[i])) {
+localTree = altTree;
+}
+else {
+altTrees.push(altTree);
+}
+}
+}
+if (localTree) {
+prover.useTree(localTree);
+prover.pruneAlternatives(localTree);
+return;
+}
+if (tree.parser.hasEquality) {
+var eqProbs = branch.createEqualityProblems(nodeList);
+if (eqProbs.length) {
+var altTree = tree.copy();
+altTree.openBranches[0].todoList = eqProbs.map(function(p) {
+return Prover.makeTodoItem(Prover.equalityReasoner, p);
+});
+altTrees.push(altTree);
+}
+}
+if (!altTrees.length) {
+return;
+}
+if (branch.todoList.length) {
+altTrees.push(tree);
+}
+var curTreeIndex = prover.curAlternativeIndex;
+prover.alternatives.splice(curTreeIndex, 1);
+if (altTrees.length) {
+do {
+var newTree = altTrees.shift();
+prover.useTree(newTree, curTreeIndex);
+prover.pruneAlternatives(newTree);
+} while (newTree.removed && altTrees.length);
+if (altTrees.length) {
+prover.storeAlternatives(altTrees);
+}
+}
+}
+Prover.literal.priority = 0;
+Prover.literal.toString = function() { return 'literal' };
+Prover.equalityReasoner = function(branch, equalityProblem) {
+var newProblems = equalityProblem.nextStep();
+if (newProblems.length == 0) {
+if (!branch.todoList[0]) {
+branch.tree.prover.discardCurrentAlternative();
+}
+return;
+}
+var tree = branch.tree;
+var prover = tree.prover;
+var altTrees = [];
+var localTree = null;
+while (newProblems.length && !newProblems[0].nextStep) {
+var solution = newProblems.shift();
+var substitution = solution.getSubstitution();
+var altTree = tree.copy();
+altTree.openBranches[0].closeWithEquality(solution);
+altTree.closeCloseableBranches();
+if (altTree.openBranches.length == 0) {
+prover.useTree(altTree);
+return;
+}
+if (!localTree) {
+if (!branch.unifierAffectsOtherBranches(substitution)) {
+localTree = altTree;
+}
+else {
+altTrees.push(altTree);
+}
+}
+}
+if (localTree) {
+prover.useTree(localTree);
+prover.pruneAlternatives(localTree);
+return;
+}
+if (newProblems.length) {
+var newTasks = newProblems.map(function(p) {
+return Prover.makeTodoItem(Prover.equalityReasoner, p);
+});
+branch.todoList.extend(newTasks);
+}
+if (!altTrees.length) {
+return;
+}
+else if (branch.todoList.length) {
+altTrees.push(tree);
+}
+var curTreeIndex = prover.curAlternativeIndex;
+prover.alternatives.splice(curTreeIndex, 1);
+if (altTrees.length) {
+do {
+var newTree = altTrees.shift();
+prover.useTree(newTree, curTreeIndex);
+prover.pruneAlternatives(newTree);
+} while (newTree.removed && altTrees.length);
+if (altTrees.length) {
+prover.storeAlternatives(altTrees);
+}
+}
+}
+Prover.equalityReasoner.priority = 0;
+Prover.equalityReasoner.toString = function() { return 'equality' }
+Prover.reflexivity = function(branch, nodeList) {
+if (nodeList.length == 0) {
+var worldName = branch.tree.parser.w;
+}
+else {
+var worldName = nodeList[0].formula.terms[1];
+}
+var R = branch.tree.parser.R;
+var formula = new AtomicFormula(R, [worldName, worldName]);
+var newNode = new Node(formula, Prover.reflexivity, nodeList || []);
+branch.addNode(newNode);
+}
+Prover.reflexivity.priority = 3;
+Prover.reflexivity.needsPremise = false;
+Prover.reflexivity.premiseCanBeReflexive = false;
+Prover.reflexivity.toString = function() { return 'reflexivity' }
+Prover.symmetry = function(branch, nodeList) {
+var nodeFormula = nodeList[0].formula;
+var R = branch.tree.parser.R;
+var formula = new AtomicFormula(R, [nodeFormula.terms[1], nodeFormula.terms[0]]);
+var newNode = new Node(formula, Prover.symmetry, nodeList);
+branch.addNode(newNode);
+}
+Prover.symmetry.priority = 3;
+Prover.symmetry.needsPremise = true;
+Prover.symmetry.premiseCanBeReflexive = false;
+Prover.symmetry.toString = function() { return 'symmetry' }
+Prover.euclidity = function(branch, nodeList) {
+var node = nodeList[0];
+var nodeFla = node.formula;
+var flaStrings = branch.nodes.map(function(n) {
+return n.formula.string;
+});
+var R = branch.tree.parser.R;
+for (var i=0; i<branch.nodes.length; i++) {
+var earlierFla = branch.nodes[i].formula;
+if (earlierFla.predicate != R) continue;
+if (earlierFla.terms[0] == nodeFla.terms[0]) {
+var newFla;
+if (!flaStrings.includes(R + earlierFla.terms[1] + nodeFla.terms[1])) {
+newFla = new AtomicFormula(R, [earlierFla.terms[1], nodeFla.terms[1]]);
+}
+else if (!flaStrings.includes(R + nodeFla.terms[1] + earlierFla.terms[1])) {
+newFla = new AtomicFormula(R, [nodeFla.terms[1], earlierFla.terms[1]]);
+}
+if (newFla) {
+var newNode = new Node(newFla, Prover.euclidity, [branch.nodes[i], node]);
+if (branch.addNode(newNode)) {
+branch.todoList.unshift(Prover.makeTodoItem(Prover.euclidity, nodeList, 0));
+return;
+}
+}
+}
+if (branch.nodes[i] == node) break;
+}
+}
+Prover.euclidity.priority = 3;
+Prover.euclidity.needsPremise = true;
+Prover.euclidity.premiseCanBeReflexive = true;
+Prover.euclidity.toString = function() { return 'euclidity' }
+Prover.transitivity = function(branch, nodeList) {
+var R = branch.tree.parser.R;
+var node = nodeList[0];
+var nodeFla = node.formula;
+for (var i=0; i<branch.nodes.length; i++) {
+var earlierFla = branch.nodes[i].formula;
+if (earlierFla.predicate != R) continue;
+if (earlierFla.terms[1] == nodeFla.terms[0]) {
+var newFla = new AtomicFormula(R, [earlierFla.terms[0], nodeFla.terms[1]]);
+var newNode = new Node(newFla, Prover.transitivity, [branch.nodes[i], node]);
+if (branch.addNode(newNode)) {
+branch.todoList.unshift(Prover.makeTodoItem(Prover.transitivity, nodeList, 0));
+return;
+}
+}
+if (earlierFla.terms[0] == nodeFla.terms[1]) {
+var newFla = new AtomicFormula(R, [nodeFla.terms[0], earlierFla.terms[1]]);
+var newNode = new Node(newFla, Prover.transitivity, [branch.nodes[i], node]);
+if (branch.addNode(newNode)) {
+branch.todoList.unshift(Prover.makeTodoItem(Prover.transitivity, nodeList, 0));
+return;
+}
+}
+if (branch.nodes[i] == node) break;
+}
+}
+Prover.transitivity.priority = 3;
+Prover.transitivity.needsPremise = true;
+Prover.transitivity.premiseCanBeReflexive = false;
+Prover.transitivity.toString = function() { return 'transitivity' }
+Prover.seriality = function(branch, nodeList) {
+var R = branch.tree.parser.R;
+if (nodeList.length == 0) {
+var oldWorld = branch.tree.parser.w;
+}
+else {
+var oldWorld = nodeList[0].formula.terms[1];
+}
+for (var i=0; i<branch.nodes.length-1; i++) {
+var earlierFla = branch.nodes[i].formula;
+if (earlierFla.predicate == R && earlierFla.terms[0] == oldWorld) {
+return;
+}
+}
+var newWorld = branch.tree.newWorldName();
+var newFla = new AtomicFormula(R, [oldWorld, newWorld]);
+var newNode = new Node(newFla, Prover.seriality, []);
+branch.addNode(newNode);
+}
+Prover.seriality.priority = 10;
+Prover.seriality.needsPremise = false;
+Prover.seriality.premiseCanBeReflexive = false;
+Prover.seriality.toString = function() { return 'seriality' }
+Prover.makeTodoItem = function(nextRule, args, priority) {
+return {
+nextRule: nextRule,
+priority: priority || nextRule.priority,
+args: args
+}
+}
+function Tree(prover) {
+if (!prover) return;
+this.prover = prover;
+this.parser = prover.parser;
+this.openBranches = [new Branch(this)];
+this.closedBranches = [];
+this.numNodes = 0;
+this.skolemSymbols = [];
+this.string = "";
+this.priority = 0;
+}
+Tree.prototype.addInitNodes = function(initFormulasNNF) {
+var initBranch = this.openBranches[0];
+for (var i=0; i<initFormulasNNF.length; i++) {
+var node = new Node(initFormulasNNF[i]);
+initBranch.addNode(node, 'evenIfDuplicate');
+initBranch.tryClose(node);
+}
+}
+Tree.prototype.closeBranch = function(branch, complementary1, complementary2) {
+branch.closed = true;
+branch.todoList = [];
+this.markUsedNodes(branch, complementary1, complementary2);
+this.openBranches.remove(branch);
+this.closedBranches.push(branch);
+this.pruneBranch(branch, complementary1, complementary2);
+this.string = this.openBranches.map(function(b) { return b.string }).join('|');
+var priorityBoost = Math.min(1, (this.numNodes-this.priority)/30);
+this.priority += priorityBoost*Math.max(1, 4-this.openBranches.length);
+}
+Tree.prototype.markUsedNodes = function(branch, complementary1, complementary2) {
+var ancestors = [complementary1, complementary2];
+var n;
+while ((n = ancestors.shift())) {
+if (n.used.indexOf(branch.id) == -1) {
+n.used += branch.id;
+for (var i=0; i<n.fromNodes.length; i++) {
+ancestors.push(n.fromNodes[i]);
+}
+}
+}
+}
+Tree.prototype.pruneBranch = function(branch, complementary1, complementary2) {
+var obranches = this.openBranches.concat(this.closedBranches);
+obranches.remove(branch);
+for (var i=branch.nodes.length-1; i>0; i--) {
+for (var j=0; j<obranches.length; j++) {
+if (obranches[j].nodes[i] &&
+obranches[j].nodes[i] != branch.nodes[i] &&
+obranches[j].nodes[i].expansionStep == branch.nodes[i].expansionStep) {
+if (branch.nodes[i].used) {
+if (!obranches[j].closed) return;
+}
+else {
+if (obranches[j].closed) {
+this.closedBranches.remove(obranches[j]);
+for (var k=0; k<i; k++) {
+branch.nodes[k].used = branch.nodes[k].used.replace(obranches[j].id, '');
+}
+}
+else {
+this.openBranches.remove(obranches[j]);
+obranches[j].removed = true;
+}
+this.numNodes -= (obranches[j].nodes.length - i);
+}
+}
+}
+if (!this.nodeIsUsed(branch.nodes[i])) {
+this.removeNode(branch, i);
+}
+}
+}
+Tree.prototype.nodeIsUsed = function(node) {
+if (node.used) return true;
+var branches = this.openBranches.concat(this.closedBranches);
+for (var i=0; i<branches.length; i++) {
+for (var j=0; j<branches[i].nodes.length; j++) {
+if (branches[i].nodes[j].expansionStep == node.expansionStep
+&& branches[i].nodes[j].used) {
+return true;
+}
+}
+}
+return false;
+}
+Tree.prototype.removeNode = function(branch, index) {
+var node = branch.nodes[index];
+var branches = this.openBranches.concat(this.closedBranches);
+for (var i=0; i<branches.length; i++) {
+if (branches[i].nodes[index] == node) {
+branches[i].nodes.splice(index,1);
+}
+if (node.type == 'literal') {
+branches[i].literals.remove(node);
+}
+}
+this.numNodes--;
+}
+Tree.prototype.closeCloseableBranches = function() {
+var openBranches = this.openBranches.copy();
+var numOpenBranches = openBranches.length;
+for (var k=0; k<openBranches.length; k++) {
+var branch = openBranches[k];
+if (branch.removed) continue;
+N1LOOP:
+for (var i=branch.nodes.length-1; i>=0; i--) {
+var n1 = branch.nodes[i];
+if (n1.formula.sub && n1.formula.sub.predicate == '='
+&& [n1.formula.sub.terms[0]].equals([n1.formula.sub.terms[1]])) {
+this.closeBranch(branch, n1, n1);
+break N1LOOP;
+}
+var n1negated = (n1.formula.operator == '¬');
+for (var j=i-1; j>=0; j--) {
+var n2 = branch.nodes[j];
+if (n2.formula.operator == '¬') {
+if (n2.formula.sub.equals(n1.formula)) {
+this.closeBranch(branch, n1, n2);
+break N1LOOP;
+}
+}
+else if (n1negated && n1.formula.sub.equals(n2.formula)) {
+this.closeBranch(branch, n1, n2);
+break N1LOOP;
+}
+}
+}
+}
+}
+Tree.prototype.getNumNodes = function() {
+try {
+return this.openBranches[0].todoList[0].args.newNodes.length +
+this.numNodes;
+}
+catch {
+return this.numNodes;
+}
+}
+Tree.prototype.copy = function() {
+var ntree = new Tree();
+var nodemap = {}
+ntree.prover = this.prover;
+ntree.parser = this.parser;
+ntree.numNodes = this.numNodes;
+ntree.skolemSymbols = this.skolemSymbols.copy();
+ntree.openBranches = [];
+for (var i=0; i<this.openBranches.length; i++) {
+ntree.openBranches.push(copyBranch(this.openBranches[i]));
+}
+ntree.closedBranches = [];
+for (var i=0; i<this.closedBranches.length; i++) {
+ntree.closedBranches.push(copyBranch(this.closedBranches[i]));
+}
+ntree.string = this.string;
+ntree.priority = this.priority;
+return ntree;
+function copyBranch(orig) {
+var nodes = [];
+var literals = [];
+var todoList = [];
+for (var i=0; i<orig.nodes.length; i++) {
+nodes.push(copyNode(orig.nodes[i]));
+}
+for (var i=0; i<orig.literals.length; i++) {
+literals.push(nodemap[orig.literals[i].id]);
+}
+for (var i=0; i<orig.todoList.length; i++) {
+var todo = {
+nextRule: orig.todoList[i].nextRule,
+priority: orig.todoList[i].priority
+};
+if (orig.todoList[i].args.equations) {
+var eqProb = orig.todoList[i].args.copy();
+eqProb.terms1Node = nodemap[eqProb.terms1Node.id];
+eqProb.terms2Node = nodemap[eqProb.terms2Node.id];
+eqProb.equations = eqProb.equations.map(function(n){ return nodemap[n.id] });
+todo.args = eqProb;
+}
+else {
+todo.args = orig.todoList[i].args.map(function(n) { return nodemap[n.id] });
+}
+todoList.push(todo);
+}
+var b = new Branch(ntree, nodes, literals,
+orig.freeVariables.copy(),
+todoList, orig.closed);
+b.id = orig.id;
+b.string = orig.string;
+return b;
+}
+function copyNode(orig) {
+if (nodemap[orig.id]) return nodemap[orig.id];
+var n = new Node();
+n.formula = orig.formula;
+n.fromRule = orig.fromRule;
+n.fromNodes = [];
+for (var i=0; i<orig.fromNodes.length; i++) {
+n.fromNodes.push(nodemap[orig.fromNodes[i].id]);
+}
+n.type = orig.type;
+n.expansionStep = orig.expansionStep;
+n.used = orig.used;
+n.id = orig.id;
+n.instanceTerm = orig.instanceTerm;
+nodemap[orig.id] = n;
+return n;
+}
+}
+Tree.prototype.applySubstitution = function(sub) {
+var branches = this.openBranches.concat(this.closedBranches);
+for (var i=0; i<sub.length; i+=2) {
+var nodeProcessed = {};
+for (var b=0; b<branches.length; b++) {
+for (var n=branches[b].nodes.length-1; n>=0; n--) {
+var node = branches[b].nodes[n];
+if (nodeProcessed[node.id]) break;
+node.formula = node.formula.substitute(sub[i], sub[i+1]);
+if (node.instanceTerm) {
+node.instanceTerm = Formula.substituteInTerm(node.instanceTerm, sub[i], sub[i+1]);
+}
+nodeProcessed[node.id] = true;
+}
+branches[b].freeVariables.remove(sub[i]);
+branches[b].freeVariables.extendNoDuplicates(collectFreeVariables(sub[i+1]));
+}
+}
+for (var b=0; b<this.openBranches.length; b++) {
+this.openBranches[b].string = this.openBranches[b].nodes.map(function(n){
+return n.formula.string
+}).join(',');
+}
+this.string = this.openBranches.map(function(b) { return b.string }).join('|');
+function collectFreeVariables(term) {
+if (typeof term === 'string') {
+return (term[0] === 'ξ' || term[0] === 'ζ') ? [term] : [];
+}
+return term.reduce((res, t) => res.concat(collectFreeVariables(t)), []);
+}
+}
+Tree.prototype.newFunctionSymbol = function(isWorldTerm) {
+var sym = isWorldTerm ? 'ω' : 'φ';
+var res = sym+'1';
+for (var i=this.skolemSymbols.length-1; i>=0; i--) {
+if (this.skolemSymbols[i][0] == sym) {
+res = sym+(this.skolemSymbols[i].substr(1)*1+1);
+break;
+}
+}
+this.skolemSymbols.push(res);
+return res;
+}
+Tree.prototype.newWorldName = function() {
+return this.newFunctionSymbol(true);
+}
+Tree.prototype.toString = function() {
+for (var i=0; i<this.closedBranches.length; i++) {
+this.closedBranches[i].nodes[this.closedBranches[i].nodes.length-1].__markClosed = true;
+}
+var branches = this.closedBranches.concat(this.openBranches);
+var res = "<table><tr><td align='center' style='font-family:monospace'>" +
+getTree(branches[0].nodes[0])+"</td</tr></table>";
+for (var i=0; i<this.closedBranches.length; i++) {
+delete this.closedBranches[i].nodes[this.closedBranches[i].nodes.length-1].__markClosed;
+}
+res += "  todo: "+(this.openBranches[0] && this.openBranches[0].todoList.map(function(t) {
+return Object.values(t); }).join(', '))+"<br>";
+res += "  search depth: "+this.getNumNodes()+"-"+this.priority+"<br>";
+return res;
+function getTree(node) {
+var recursionDepth = arguments[1] || 0;
+if (++recursionDepth > 100) return "<b>...<br>[max recursion]</b>";
+var children = [];
+for (var i=0; i<branches.length; i++) {
+for (var j=0; j<branches[i].nodes.length; j++) {
+if (branches[i].nodes[j-1] != node) continue;
+if (!children.includes(branches[i].nodes[j])) {
+children.push(branches[i].nodes[j]);
+}
+}
+}
+var nodestr = node.toString().replace(/([φω]\d+)(\(.*?\))(?!\)|,)/g, function(m,p1,p2) {
+var res = p1;
+var extraClosed = (m.match(/\)/g) || []).length - (m.match(/\(/g) || []).length;
+for (var i=0; i<extraClosed; i++) res += ')';
+return res;
+});
+var res = node.used + ' ' + nodestr + (node.__markClosed ? "<br>x<br>" : "<br>");
+if (children[1]) {
+var tdStyle = "font-family:monospace; border-top:1px solid #999; padding:3px; border-right:1px solid #999";
+var td = "<td align='center' valign='top' style='" + tdStyle + "'>";
+res += "<table><tr>"+ td + getTree(children[0], recursionDepth) +"</td>\n"
++ td + getTree(children[1], recursionDepth) + "</td>\n</tr></table>";
+}
+else if (children[0]) res += getTree(children[0], recursionDepth);
+return res;
+}
+}
+function Branch(tree, nodes, literals, freeVariables, todoList, closed) {
+this.tree = tree;
+this.nodes = nodes || [];
+this.literals = literals || [];
+this.freeVariables = freeVariables || [];
+this.todoList = todoList || [];
+this.closed = closed || false;
+this.id = 'b'+(Branch.counter++)+'.';
+this.string = '';
+}
+Branch.counter = 0;
+Branch.prototype.newVariable = function(isWorldTerm) {
+var sym = isWorldTerm ? 'ζ' : 'ξ';
+var res = sym+'1';
+for (var i=this.freeVariables.length-1; i>=0; i--) {
+if (this.freeVariables[i][0] == sym) {
+res = sym+(this.freeVariables[i].substr(1)*1+1);
+break;
+}
+}
+this.freeVariables.push(res);
+return res;
+}
+Branch.prototype.tryClose = function(node, dontPrune) {
+var complFormula = (node.formula.operator == '¬') ? node.formula.sub : node.formula.negate();
+var complNode;
+for (var i=0; i<this.nodes.length; i++) {
+if (this.nodes[i].formula.equals(complFormula)) {
+if (this.nodes[i].used || !complNode) {
+complNode = this.nodes[i];
+if (complNode.used) break;
+}
+}
+}
+if (complNode) {
+this.tree.closeBranch(this, node, complNode);
+if (!dontPrune) {
+this.tree.prover.pruneAlternatives(this.tree);
+}
+return true;
+}
+return false;
+}
+Branch.prototype.unifierAffectsOtherBranches = function(unifier) {
+for (var j=0; j<this.tree.openBranches.length; j++) {
+var branch = this.tree.openBranches[j];
+if (branch == this) continue;
+for (var i=0; i<unifier.length; i+=2) {
+if (branch.freeVariables.includes(unifier[i])) return true;
+}
+}
+return false;
+}
+Branch.prototype.closeWithEquality = function(solution) {
+for (var i=0; i<solution.newNodes.length; i++) {
+var node = solution.newNodes[i].copy();
+var nf0 = node.fromNodes[0];
+var nf1 = node.fromNodes[1];
+node.fromNodes[0] = this.getNodeById(node.fromNodes[0].id);
+node.fromNodes[1] = this.getNodeById(node.fromNodes[1].id);
+this.addNode(node, true);
+node.expansionStep = this.tree.prover.step - solution.newNodes.length + i + 1;
+}
+var subs = solution.getSubstitution();
+this.tree.applySubstitution(subs);
+var closingNode1 = this.getNodeById(solution.terms1Node.id);
+var closingNode2 = this.getNodeById(solution.terms2Node.id);
+this.tree.closeBranch(this, closingNode1, closingNode2);
+return;
+}
+Branch.prototype.getNodeById = function(id) {
+for (var i=this.literals.length-1; i>=0; i--) {
+if (this.literals[i].id == id) return this.literals[i];
+}
+}
+Branch.prototype.copy = function() {
+var res = new Branch(this.tree,
+this.nodes.copy(),
+this.literals.copy(),
+this.freeVariables.copy(),
+this.todoList.copy(),
+this.closed);
+res.string = this.string;
+return res;
+}
+Branch.prototype.addNode = function(node, dontSkip) {
+var addToTodo = true;
+if (this.containsFormula(node.formula)) {
+if (dontSkip) addToTodo = false;
+else return null;
+}
+this.nodes.push(node);
+this.string += (this.string ? ',' : '')+node.formula.string;
+this.tree.string = this.tree.openBranches.map(function(b) { return b.string }).join('|');
+this.tree.numNodes++;
+if (node.type == 'literal') {
+this.literals.push(node);
+}
+if (!this.closed && addToTodo) {
+this.expandTodoList(node);
+}
+node.expansionStep = this.tree.prover.step;
+return node;
+}
+Branch.prototype.containsFormula = function(formula) {
+for (var i=0; i<this.nodes.length; i++) {
+if (this.nodes[i].formula.string == formula.string) return true;
+}
+return false;
+}
+Branch.prototype.expandTodoList = function(node) {
+var todo = node.getExpansionTask();
+if (todo.nextRule == Prover.literal &&
+this.todoList[0] && this.todoList[0].nextRule == Prover.literal) {
+this.todoList[0].args.push(node);
+}
+else {
+for (var i=0; i<this.todoList.length; i++) {
+if (todo.priority <= this.todoList[i].priority) break;
+}
+this.todoList.insert(todo, i);
+}
+if (this.tree.parser.isModal) {
+if (this.nodes.length == 1) {
+this.addAccessibilityRuleApplications();
+}
+else if (node.formula.predicate == this.tree.parser.R) {
+this.addAccessibilityRuleApplications(node);
+}
+}
+}
+Branch.prototype.addAccessibilityRuleApplications = function(node) {
+for (var i=0; i<this.tree.prover.accessibilityRules.length; i++) {
+var rule = this.tree.prover.accessibilityRules[i];
+var pos = this.todoList.length;
+while (pos > 0 && this.todoList[pos-1].priority >= rule.priority) pos--;
+if (node) {
+if (node.formula.terms[0] != node.formula.terms[1]
+|| rule.premiseCanBeReflexive) {
+this.todoList.insert(Prover.makeTodoItem(rule, [node]), pos);
+}
+}
+else {
+if (!rule.needsPremise) {
+this.todoList.insert(Prover.makeTodoItem(rule, []), pos);
+}
+}
+}
+}
+Branch.prototype.getClosingUnifiers = function(node) {
+var nodeAtom = node.formula.sub || node.formula;
+var unifiersHash = {};
+for (var i=this.literals.length-1; i>=0; i--) {
+var otherNode = this.literals[i];
+if (otherNode == node) continue;
+if (!otherNode.formula.sub == !node.formula.sub) continue;
+var otherAtom = otherNode.formula.sub || otherNode.formula;
+if (otherAtom.predicate != nodeAtom.predicate) continue;
+var u = Formula.unifyTerms(nodeAtom.terms, otherAtom.terms);
+if (u.isArray) {
+unifiersHash[u.toString()] = u;
+}
+}
+if (nodeAtom.predicate == '=' && node.formula.sub) {
+var u = Formula.unifyTerms([nodeAtom.terms[0]], [nodeAtom.terms[1]]);
+if (u.isArray) {
+unifiersHash[u.toString()] = u;
+}
+}
+return Object.values(unifiersHash);
+}
+Branch.prototype.createEqualityProblems = function(nodes) {
+nodes = nodes.filter(function(n) {
+return !(n.formula.predicate == '='
+&& n.formula.terms[0].toString() == n.formula.terms[1].toString());
+});
+for (var i=0; i<nodes.length; i++) {
+if (nodes[i].formula.predicate == '=') {
+var recNodes = this.literals.filter(function(lit) {
+return lit.formula.sub;
+});
+return this.createEqualityProblems(recNodes);
+}
+}
+var res = [];
+for (var i=0; i<nodes.length; i++) {
+var node = nodes[i];
+if (node.formula.sub && node.formula.sub.predicate == '=') {
+var prob = this.createEqualityProblem(node, node)
+if (prob) res.push(prob);
+}
+else {
+for (var j=0; j<this.literals.length; j++) {
+var lit = this.literals[j];
+if ((node.formula.sub && lit.formula.predicate == node.formula.sub.predicate) ||
+(lit.formula.sub && node.formula.predicate == lit.formula.sub.predicate)) {
+var prob = this.createEqualityProblem(node, lit);
+if (prob) res.push(prob);
+}
+}
+}
+}
+return res;
+}
+Branch.prototype.createEqualityProblem = function(node1, node2) {
+var equations = this.literals.filter(function(n) {
+return n.formula.predicate == '='
+&& ![n.formula.terms[0]].equals([n.formula.terms[1]]);
+});
+if (!equations.length) return null;
+equations.reverse();
+var prob = new EqualityProblem(this.tree.parser);
+prob.init(equations, node1, node2);
+return prob;
+}
+Branch.prototype.toString = function() {
+return this.string;
+}
+function Node(formula, fromRule, fromNodes) {
+if (!formula) return;
+this.formula = formula;
+this.type = formula.type;
+this.id = Node.counter++;
+this.fromRule = fromRule || null;
+this.fromNodes = fromNodes || [];
+this.used = '';
+}
+Node.counter = 0;
+Node.prototype.getExpansionTask = function() {
+var todo = {
+nextRule: Prover[this.type],
+priority: Prover[this.type].priority,
+args: [this]
+}
+if (this.type == 'gamma' && this.formula.string.includes('∃')) {
+todo.priority -= 0.5;
+}
+else if (this.type == 'modalGamma' && this.formula.string.includes('◇')) {
+todo.priority -= 0.5;
+}
+return todo;
+}
+Node.prototype.copy = function() {
+var res = new Node();
+res.formula = this.formula;
+res.fromRule = this.fromRule;
+res.fromNodes = this.fromNodes.copy();
+res.type = this.type;
+res.id = this.id;
+res.used = this.used;
+return res;
+}
+Node.prototype.toString = function() {
+return this.formula.toString();
+}
+
+function EqualityProblem(parser, substitutionConstraint) {
+this.parser = parser;
+this.terms1 = null;
+this.terms2 = null;
+this.terms1Node = null;
+this.terms2Node = null;
+this.equations = [];
+this.constraint = substitutionConstraint || new SubstitutionConstraint();
+this.newNodes = [];
+this.nextStep = this.start;
+this.lastStep = null;
+this.lrbsIndex = -1;
+}
+EqualityProblem.prototype.init = function(equationNodes, goalNode1, goalNode2) {
+this.equations = equationNodes;
+this.terms1Node = goalNode1;
+this.terms2Node = goalNode2;
+if (goalNode1 == goalNode2) {
+this.terms1 = [goalNode1.formula.sub.terms[0]];
+this.terms2 = [goalNode1.formula.sub.terms[1]];
+}
+else if (goalNode1.formula.sub) {
+this.terms1 = goalNode1.formula.sub.terms;
+this.terms2 = goalNode2.formula.terms;
+}
+else {
+this.terms1 = goalNode1.formula.terms;
+this.terms2 = goalNode2.formula.sub.terms;
+}
+}
+EqualityProblem.prototype.addSkolemConstraints = function(terms) {
+for (var i=0; i<terms.length; i++) {
+if (!terms[i].isArray) continue;
+if (terms[i][0][0] == 'φ' || terms[i][0][0] == 'ω') {
+terms[i][0][0].isSkolemTerm = true;
+var fvs = getVariablesInTermList(terms[i]);
+for (var j=0; j<fvs.length; j++) {
+this.constraint.addGreater(terms[i], fvs[j]);
+}
+}
+}
+}
+function getVariablesInTermList(terms) {
+var res = [];
+var dupe = {};
+for (var i=0; i<terms.length; i++) {
+if (terms[i].isArray) {
+res.extendNoDuplicates(getVariablesInTermList(terms[i]));
+}
+else if ((terms[i][0] == 'ξ' || terms[i][0] == 'ζ') && !dupe[terms[i]]) {
+dupe[terms[i]] = true;
+res.push(terms[i]);
+}
+}
+return res;
+}
+EqualityProblem.prototype.start = function() {
+return this.tryRrbs();
+}
+EqualityProblem.prototype.tryRrbs = function() {
+var equations = this.lastStep == this.tryLrbs ?
+[this.equations[this.lrbsIndex]] : this.equations;
+var schedule = [];
+for (var i=0; i<this.terms1.length; i++) {
+var nc = this.constraint.tryAddEqual(this.terms1[i], this.terms2[i]);
+if (nc && nc == this.constraint) {
+continue;
+}
+for (var sIsTerms1=1; sIsTerms1>=0; sIsTerms1--) {
+var s = sIsTerms1 ? this.terms1 : this.terms2;
+var t = sIsTerms1 ? this.terms2 : this.terms1;
+var fconstraint = this.constraint.tryAddGreater(s[i],t[i]);
+if (!fconstraint) continue;
+var siSubterms = this.subterms(s[i]);
+for (var ei=0; ei<equations.length; ei++) {
+for (var lIsLHS=1; lIsLHS>=0; lIsLHS--) {
+var l = equations[ei].formula.terms[lIsLHS ? 0 : 1];
+var r = equations[ei].formula.terms[lIsLHS];
+var sconstraint = fconstraint.tryAddGreater(l,r);
+if (!sconstraint) continue;
+for (var j=0; j<siSubterms.length; j++) {
+var p = siSubterms[j];
+var tconstraint = sconstraint.tryAddEqual(l,p)
+if (!tconstraint) continue;
+var new_sis = replaceSubterm(s[i], p, r);
+for (var g=0; g<new_sis.length; g++) {
+var newProblem = this.copy(tconstraint);
+newProblem.applyLLtoGoal(i, sIsTerms1, new_sis[g], equations[ei]);
+newProblem.lastStep = this.tryRrbs;
+if (newProblem.tryEr()) {
+newProblem.nextStep = null;
+schedule.unshift(newProblem);
+}
+else {
+newProblem.nextStep = this.tryRrbs;
+schedule.push(newProblem);
+}
+}
+}
+}
+}
+}
+}
+this.nextStep = this.tryLrbs;
+schedule.push(this);
+return schedule.removeDuplicates();
+}
+EqualityProblem.prototype.tryLrbs = function() {
+var schedule = [];
+for (var j=0; j<this.equations.length; j++) {
+for (var sIsLHS=1; sIsLHS>=0; sIsLHS--) {
+var s = this.equations[j].formula.terms[sIsLHS ? 0 : 1];
+var t = this.equations[j].formula.terms[sIsLHS];
+var fconstraint = this.constraint.tryAddGreater(s,t);
+if (!fconstraint) continue;
+var sourceEquations = (j <= this.lrbsIndex) ?
+[this.equations[this.lrbsIndex]] : this.equations;
+for (var i=0; i<sourceEquations.length; i++) {
+for (var lIsLHS=1; lIsLHS>=0; lIsLHS--) {
+var l = sourceEquations[i].formula.terms[lIsLHS ? 0 : 1];
+var r = sourceEquations[i].formula.terms[lIsLHS];
+var sconstraint = fconstraint.tryAddGreater(l,r);
+if (!sconstraint) continue;
+var sSubterms = this.subterms(s);
+for (var k=0; k<sSubterms.length; k++) {
+var p = sSubterms[k];
+var tconstraint = sconstraint.tryAddEqual(l,p);
+if (!tconstraint) continue;
+var new_ss = replaceSubterm(s, p, r);
+for (var g=0; g<new_ss.length; g++) {
+var new_s = new_ss[g];
+if (new_s.toString() == t.toString()) continue;
+var newProblem = this.copy(tconstraint);
+newProblem.applyLLtoEquation(j, sIsLHS, new_ss[g], sourceEquations[i]);
+newProblem.lrbsIndex = j;
+newProblem.lastStep = newProblem.tryLrbs;
+newProblem.nextStep = newProblem.tryRrbs;
+schedule.push(newProblem);
+}
+}
+}
+}
+}
+}
+return schedule.removeDuplicates();
+}
+EqualityProblem.prototype.tryEr = function() {
+var con = this.constraint;
+for (var i=0; i<this.terms1.length; i++) {
+con = con.tryAddEqual(this.terms1[i], this.terms2[i]);
+if (!con) return false;
+}
+this.constraint = con;
+return true;
+}
+EqualityProblem.prototype.applyLLtoGoal = function(i, sIsTerms1, new_si, equation) {
+if (sIsTerms1) {
+this.terms1 = this.terms1.copy();
+this.terms1.splice(i, 1, new_si);
+}
+else {
+this.terms2 = this.terms2.copy();
+this.terms2.splice(i, 1, new_si);
+}
+if (this.terms1Node == this.terms2Node) {
+var newFormula = new AtomicFormula('=', [this.terms1[0], this.terms2[0]]).negate();
+var newNode = new Node(newFormula,
+Prover.equalityReasoner,
+[equation, this.terms1Node]
+);
+this.newNodes.push(newNode);
+this.terms1Node = newNode;
+this.terms2Node = newNode;
+}
+else {
+var targetNode = sIsTerms1 ? this.terms1Node : this.terms2Node;
+var targetAtom = targetNode.formula.sub || targetNode.formula;
+var newFormula = new AtomicFormula(targetAtom.predicate,
+sIsTerms1 ? this.terms1 : this.terms2);
+if (targetNode.formula.sub) newFormula = newFormula.negate();
+var newNode = new Node(newFormula,
+Prover.equalityReasoner,
+[equation, targetNode]
+);
+this.newNodes.push(newNode);
+if (sIsTerms1) this.terms1Node = newNode;
+else this.terms2Node = newNode;
+}
+}
+EqualityProblem.prototype.applyLLtoEquation = function(j, sIsLHS, new_s, sourceEq) {
+var targetEq = this.equations[j];
+var newFormula = new AtomicFormula('=', [
+sIsLHS ? new_s : targetEq.formula.terms[0],
+sIsLHS ? targetEq.formula.terms[1] : new_s
+]);
+var newNode = new Node(newFormula,
+Prover.equalityReasoner,
+[sourceEq, targetEq]
+);
+this.newNodes.push(newNode);
+this.equations = this.equations.copy();
+this.equations.splice(j, 1, newNode);
+}
+EqualityProblem.prototype.getSubstitution = function() {
+var sdict = this.constraint.solvedForms[0].solvedDict;
+var res = [];
+for (var v1 in sdict) {
+res.push(v1, sdict[v1]);
+}
+return res;
+}
+EqualityProblem.prototype.copy = function(constraint) {
+var res = new EqualityProblem(this.parser, constraint || this.constraint);
+res.terms1 = this.terms1;
+res.terms2 = this.terms2;
+res.equations = this.equations;
+res.terms1Node = this.terms1Node;
+res.terms2Node = this.terms2Node;
+res.newNodes = this.newNodes.copy();
+res.lastStep = this.lastStep;
+res.nextStep = this.nextStep;
+res.lrbsIndex = this.lrbsIndex;
+return res;
+}
+EqualityProblem.prototype.toString = function() {
+var nextStepStr = this.nextStep==this.tryRrbs ? 'rrbs' :
+this.nextStep==this.tryLrbs ? 'lrbs' :
+this.nextStep==this.tryEr ? 'er' :
+this.nextStep==this.start ? 'start' :
+this.nextStep==null ? '' : '???';
+return '&lt;' + this.equations + ' ⊢ ' + this.terms1 + '=' + this.terms2
++ ' (' + this.constraint + ') *' + nextStepStr + '&gt;';
+}
+EqualityProblem.prototype.subterms = function(term) {
+if (term.isArray) {
+if (term[0][0] == 'ω') return [];
+if (term[0][0] == 'φ') {
+return [term];
+}
+var res = [term];
+for (var i=1; i<term.length; i++) {
+res.extendNoDuplicates(this.subterms(term[i]));
+}
+return res;
+}
+if (term[0] == 'ξ' || term[0] == 'ζ') return [];
+if (term[0] == 'ω' || this.parser.expressionType[term] == 'world variable') return [];
+return [term];
+}
+function replaceSubterm(term, sub, repl) {
+var subStr = sub.toString();
+if (term.toString() == subStr) return [repl];
+if (!term.isArray || term[0][0] == 'φ' || term[0][0] == 'ω') return [];
+var res = [];
+for (var i=1; i<term.length; i++) {
+var newSubterms = replaceSubterm(term[i], sub, repl);
+for (var j=0; j<newSubterms.length; j++) {
+var newTerm = term.copy()
+newTerm.splice(i, 1, newSubterms[j]);
+res.push(newTerm);
+}
+}
+return res;
+}
+function SubstitutionConstraint(equalities, inequalities, solvedForms) {
+this.equalities = equalities || [];
+this.inequalities = inequalities || [];
+this.solvedForms = solvedForms || [new SolvedForm()];
+}
+SubstitutionConstraint.prototype.tryAddEqual = function(s, t) {
+var sfChanged = false;
+var sfs = [];
+for (var i=0; i<this.solvedForms.length; i++) {
+var sf = this.solvedForms[i].addEqual(s,t);
+if (sf.length != 1 || !sf[0].equals(this.solvedForms[i])) sfChanged = true;
+sfs.extendNoDuplicates(sf);
+}
+if (sfs.length == 0) {
+return null;
+}
+if (sfChanged) {
+var newEqualities = this.equalities.copy();
+newEqualities.push(s+'='+t);
+return new SubstitutionConstraint(newEqualities, this.inequalities, sfs);
+}
+else {
+return this;
+}
+}
+SubstitutionConstraint.prototype.tryAddGreater = function(s, t) {
+var sfChanged = false;
+var sfs = [];
+for (var i=0; i<this.solvedForms.length; i++) {
+var sfa = this.solvedForms[i].addGreater(s,t);
+if (sfa.length != 1 || !sfa[0].equals(this.solvedForms[i])) sfChanged = true;
+sfs.extendNoDuplicates(sfa);
+}
+if (sfs.length == 0) {
+return null;
+}
+if (sfChanged) {
+var newInequalities = this.inequalities.copy();
+newInequalities.push(s+'>'+t);
+return new SubstitutionConstraint(this.equalities, newInequalities, sfs);
+}
+else {
+return this;
+}
+}
+SubstitutionConstraint.prototype.toString = function() {
+return this.equalities.join(' ')+' '+this.inequalities.join(' ');
+}
+function SolvedForm() {
+this.solvedDict = {};
+this.solvedDictStr = [];
+this.inequalities = [];
+this.inequalitiesStr = [];
+}
+SolvedForm.prototype.addEqual = function(s, t) {
+var sStr = s.toString();
+var tStr = t.toString();
+for (var v in this.solvedDict) {
+if (sStr.includes(v)) {
+s = Formula.substituteInTerm(s, v, this.solvedDict[v]);
+sStr = s.toString();
+}
+if (tStr.includes(v)) {
+t = Formula.substituteInTerm(t, v, this.solvedDict[v]);
+tStr = t.toString();
+}
+}
+if (sStr == tStr) {
+return [this];
+}
+if (sStr[0] == 'ξ' || sStr[0] == 'ζ') {
+if (this.occursCheckStr(sStr,tStr)) {
+return [];
+}
+else {
+return this.addSubs(s,t);
+}
+}
+else if (tStr[0] == 'ξ' || tStr[0] == 'ζ') {
+return this.addEqual(t,s);
+}
+else if (s.isArray && t.isArray) {
+if (s[0] != t[0]) {
+return [];
+}
+var res = [this];
+for (var i=1; i<s.length; i++) {
+var newRes = [];
+for (var j=0; j<res.length; j++) {
+newRes.extendNoDuplicates(res[j].addEqual(s[i],t[i]));
+}
+res = newRes;
+}
+return res;
+}
+else return [];
+}
+SolvedForm.prototype.addSubs = function(v, t) {
+var sf = new SolvedForm();
+for (v2 in this.solvedDict) {
+sf.solvedDict[v2] = Formula.substituteInTerm(this.solvedDict[v2], v, t);
+sf.solvedDictStr.push(v2+'='+sf.solvedDict[v2]);
+}
+sf.solvedDict[v] = t;
+sf.solvedDictStr.push(v+'='+t);
+sf.solvedDictStr.sort();
+var res = [sf];
+for (var i=0; i<this.inequalities.length; i++) {
+var ineq = this.inequalities[i];
+var newRes = [];
+for (var j=0; j<res.length; j++) {
+newRes.extendNoDuplicates(res[j].addGreater(ineq[0],ineq[1]));
+}
+res = newRes;
+}
+return res;
+}
+SolvedForm.prototype.addGreater = function(s, t) {
+var sStr = s.toString();
+var tStr = t.toString();
+for (var v in this.solvedDict) {
+if (sStr.includes(v)) {
+s = Formula.substituteInTerm(s, v, this.solvedDict[v]);
+sStr = s.toString();
+}
+if (tStr.includes(v)) {
+t = Formula.substituteInTerm(t, v, this.solvedDict[v]);
+tStr = t.toString();
+}
+}
+var sIsVar = sStr[0] == 'ξ' || sStr[0] == 'ζ';
+var tIsVar = tStr[0] == 'ξ' || tStr[0] == 'ζ';
+if (sIsVar || tIsVar) {
+if (this.inequalitiesStr.includes(sStr+'>'+tStr)) {
+return [this];
+}
+if (sIsVar && this.occursCheckStr(sStr,tStr)) {
+return [];
+}
+else if (tIsVar && this.occursCheckStr(tStr,sStr)) {
+return [this];
+}
+else {
+if (this.inequalitiesStr.includes(tStr+'>'+sStr)) {
+return [];
+}
+var sf = this.copy();
+sf.inequalities.push([s,t]);
+sf.inequalitiesStr.push(sStr+'>'+tStr);
+sf.inequalities.sort();
+return [sf];
+}
+}
+var sRoot = s.isArray ? s[0] : s;
+var tRoot = t.isArray ? t[0] : t;
+if (sRoot > tRoot) {
+var res = [this];
+if (t.isArray) {
+for (var i=1; i<t.length; i++) {
+var newRes = [];
+for (var j=0; j<res.length; j++) {
+newRes.extendNoDuplicates(res[j].addGreater(s,t[i]));
+}
+res = newRes;
+}
+}
+return res;
+}
+else if (tRoot > sRoot) {
+var res = [];
+if (s.isArray) {
+for (var i=1; i<s.length; i++) {
+res.extendNoDuplicates(this.addEqual(s[i],t));
+res.extendNoDuplicates(this.addGreater(s[i],t));
+}
+}
+return res;
+}
+else {
+if (!s.isArray) {
+return [];
+}
+var res = [];
+for (var i=1; i<s.length; i++) {
+res.extendNoDuplicates(this.addEqual(s[i],t));
+res.extendNoDuplicates(this.addGreater(s[i],t));
+}
+var eq = [this];
+for (var i=1; i<s.length; i++) {
+var h = [];
+for (var j=0; j<eq.length; j++) {
+h.extendNoDuplicates(eq[j].addGreater(s[i], t[i], 1));
+}
+for (var j=i+1; j<s.length; j++) {
+var newH = [];
+for (var k=0; k<h.length; k++) {
+newH.extendNoDuplicates(h[k].addGreater(s[i], t[i], 1));
+}
+h = newH;
+}
+res.extendNoDuplicates(h);
+var newEq = [];
+for (var j=0; j<eq.length; j++) {
+newEq.extendNoDuplicates(eq[j].addEqual(s[i], t[i], 1));
+}
+eq = newEq;
+}
+return res;
+}
+}
+SolvedForm.prototype.occursCheck = function(v, t) {
+if (t[0] == 'ξ' || t[0] == 'ζ') {
+return t == v;
+}
+else if (t.isArray) {
+for (var i=1; i<t.length; i++) {
+if (this.occursCheck(v, t[i])) return true;
+}
+}
+return false;
+}
+SolvedForm.prototype.occursCheckStr = function(v, t) {
+var ts = t.split(v, 2);
+if (ts.length == 2) {
+return isNaN(ts[1][0]);
+}
+return false;
+}
+SolvedForm.prototype.checkSatisfiable = function() {
+return true;
+}
+SolvedForm.prototype.copy = function() {
+var res = new SolvedForm();
+for (key in this.solvedDict) {
+res.solvedDict[key] = this.solvedDict[key];
+}
+res.solvedDictStr = this.solvedDictStr.copy();
+res.inequalities = this.inequalities.copy();
+res.inequalitiesStr = this.inequalitiesStr.copy();
+return res;
+}
+SolvedForm.prototype.equals = function(sf) {
+if (this.solvedDictStr.join() != sf.solvedDictStr.join()) return false;
+return (this.inequalitiesStr.join() == sf.inequalitiesStr.join());
+}
+SolvedForm.prototype.toString = function() {
+return '{'+this.solvedDictStr.join(' ')+';'+this.inequalitiesStr.join(' ')+'}';
+}
+
+function ModelFinder(initFormulas, parser, accessibilityConstraints, s5) {
+this.parser = parser;
+this.s5 = s5;
+if (s5) {
+accessibilityConstraints = [];
+initFormulas = initFormulas.map(function(f) {
+return parser.stripAccessibilityClauses(f);
+});
+}
+this.predicates = parser.getSymbols('predicate');
+if (s5) this.predicates.remove(parser.R);
+this.constants = parser.getSymbols('individual constant');
+this.funcSymbols = parser.getSymbols('function symbol');
+if (parser.isModal) {
+this.constants.unshift(parser.w);
+}
+this.numericConstRestore = {};
+for (var i=0; i<this.constants.length; i++) {
+if (/^\d+$/.test(this.constants[i])) {
+var orig = this.constants[i];
+var renamed = 'ν'+orig;
+this.numericConstRestore[renamed] = orig;
+this.constants[i] = renamed;
+parser.registerExpression(renamed, 'individual constant', 0);
+initFormulas = initFormulas.map(f => f.substitute(orig, renamed));
+}
+}
+initFormulas = initFormulas.concat(accessibilityConstraints || []);
+this.clauses = this.getClauses(initFormulas);
+var numIndividuals = 1;
+var numWorlds = this.parser.isModal ? 1 : 0;
+this.model = new Model(this, numIndividuals, numWorlds);
+this.searchStack = [];
+}
+ModelFinder.prototype.getClauses = function(formulas) {
+var resNormal = [];
+var resTseitin = [];
+const MAX_CLAUSES = 100000;
+var usingTseitin = false;
+for (var i=0; i<formulas.length; i++) {
+var formula = formulas[i];
+var distinctVars = this.makeVariablesDistinct(formula);
+var skolemized = this.skolemize(distinctVars);
+var quantifiersRemoved = skolemized.removeQuantifiers();
+var clausesTseitin = this.tseitinCNF(quantifiersRemoved);
+resTseitin.extendNoDuplicates(clausesTseitin);
+try {
+var clauses = this.cnf(quantifiersRemoved, MAX_CLAUSES);
+resNormal.extendNoDuplicates(clauses);
+} catch(e) {
+if (e.message !== "CNF_TOO_BIG") throw e;
+resNormal.extendNoDuplicates(clausesTseitin);
+usingTseitin = true;
+}
+}
+resNormal.sort(function(a,b){ return a.length - b.length; });
+resNormal = this.simplifyClauses(resNormal);
+resTseitin.sort(function(a,b){ return a.length - b.length; });
+resTseitin = this.simplifyClauses(resTseitin);
+resTseitin = this.eliminateUniversalTseitinPredicates(resTseitin);
+var parser = this.parser;
+function groundingCost(clauses) {
+var cost = 0;
+for (var i=0; i<clauses.length; i++) {
+var vars = [];
+for (var j=0; j<clauses[i].length; j++) {
+vars.extendNoDuplicates(parser.getVariables(clauses[i][j]));
+}
+cost += Math.pow(2, vars.length);
+if (!isFinite(cost)) return Infinity;
+}
+return cost;
+}
+var costPlain = groundingCost(resNormal);
+var costTseitin = groundingCost(resTseitin);
+var chosen;
+if (costTseitin < costPlain) {
+chosen = resTseitin;
+}
+else {
+chosen = resNormal;
+if (usingTseitin) {
+chosen = this.eliminateUniversalTseitinPredicates(chosen);
+}
+}
+var used = new Set();
+for (var i=0; i<chosen.length; i++) {
+for (var j=0; j<chosen[i].length; j++) {
+var lit = chosen[i][j];
+used.add((lit.sub || lit).predicate);
+}
+}
+this.parser.symbols = this.parser.symbols.filter(function(s) {
+if (this.parser.expressionType[s] === 'tseitin predicate' && !used.has(s)) {
+delete this.parser.expressionType[s];
+delete this.parser.arities[s];
+delete this.parser.predicateArgTypes[s];
+return false;
+}
+return true;
+}.bind(this));
+return chosen;
+}
+ModelFinder.prototype.eliminateUniversalTseitinPredicates = function(clauses) {
+var parser = this.parser;
+var alwaysTrue = {};
+var alwaysFalse = {};
+var nl = clauses;
+var changed = true;
+while (changed) {
+changed = false;
+for (var i = 0; i < nl.length; i++) {
+if (nl[i].length !== 1) continue;
+var lit = nl[i][0];
+var atom = lit.sub || lit;
+if (parser.expressionType[atom.predicate] !== 'tseitin predicate') continue;
+var terms = atom.terms;
+var seenVar = {};
+var ok = true;
+for (var j = 0; j < terms.length; j++) {
+var t = terms[j];
+if (t.isArray) { ok = false; break; }
+var etype = parser.expressionType[t];
+if (!etype || etype.indexOf('variable') === -1) { ok = false; break; }
+if (seenVar[t]) { ok = false; break; }
+seenVar[t] = true;
+}
+if (!ok) continue;
+var pred = atom.predicate;
+var isPos = !lit.sub;
+if (isPos) {
+if (alwaysTrue[pred]) continue;
+if (alwaysFalse[pred]) return [[]];
+alwaysTrue[pred] = true;
+} else {
+if (alwaysFalse[pred]) continue;
+if (alwaysTrue[pred]) return [[]];
+alwaysFalse[pred] = true;
+}
+changed = true;
+}
+if (!changed) break;
+var nl2 = [];
+var seen = new Set();
+for (var i = 0; i < nl.length; i++) {
+var clause = nl[i];
+var newClause = [];
+var satisfied = false;
+for (var j = 0; j < clause.length; j++) {
+var clit = clause[j];
+var cpred = (clit.sub || clit).predicate;
+var cpos = !clit.sub;
+if (alwaysTrue[cpred]) {
+if (cpos) { satisfied = true; break; }
+continue;
+}
+if (alwaysFalse[cpred]) {
+if (!cpos) { satisfied = true; break; }
+continue;
+}
+newClause.push(clit);
+}
+if (satisfied) continue;
+if (newClause.length === 0) return [[]];
+var key = newClause.map(function(l) { return l.key(); }).join("\t");
+if (seen.has(key)) continue;
+seen.add(key);
+nl2.push(newClause);
+}
+nl = nl2;
+}
+return nl;
+};
+ModelFinder.prototype.makeVariablesDistinct = function(formula) {
+var usedVariables = arguments[1] || [];
+var parser = this.parser;
+if (formula.matrix) {
+var nmatrix = formula.matrix;
+var nvar = formula.variable;
+if (usedVariables.includes(formula.variable)) {
+nvar = parser.expressionType[nvar] == 'world variable' ?
+parser.getNewWorldVariable() : parser.getNewVariable();
+nmatrix = nmatrix.substitute(formula.variable, nvar);
+}
+usedVariables.push(nvar);
+nmatrix = this.makeVariablesDistinct(nmatrix, usedVariables);
+if (nmatrix == formula.matrix) return formula;
+return new QuantifiedFormula(formula.quantifier, nvar, nmatrix, formula.overWorlds);
+}
+if (formula.sub1) {
+var nsub1 = this.makeVariablesDistinct(formula.sub1, usedVariables);
+var nsub2 = this.makeVariablesDistinct(formula.sub2, usedVariables);
+if (formula.sub1 == nsub1 && formula.sub2 == nsub2) return formula;
+return new BinaryFormula(formula.operator, nsub1, nsub2);
+}
+return formula;
+}
+ModelFinder.prototype.skolemize = function(formula) {
+var boundVars = arguments[1] ? arguments[1].copy() : [];
+var parser = this.parser;
+if (formula.quantifier == '∃') {
+var skolemVars = [];
+boundVars.forEach(function(v) {
+if (formula.matrix.string.indexOf(v) > -1) skolemVars.push(v);
+});
+var isWorldType = parser.expressionType[formula.variable] == 'world variable';
+var skolemTerm;
+if (skolemVars.length > 0) {
+var funcSymbol = parser.getNewFunctionSymbol(skolemVars.length, isWorldType);
+parser.functionArgTypes[funcSymbol] = skolemVars.map(function(v) {
+return parser.expressionType[v];
+});
+var skolemTerm = skolemVars;
+skolemTerm.unshift(funcSymbol);
+}
+else skolemTerm = isWorldType ? parser.getNewWorldName() : parser.getNewConstant();
+var nmatrix = formula.matrix.substitute(formula.variable, skolemTerm);
+nmatrix = this.skolemize(nmatrix, boundVars);
+return nmatrix;
+}
+if (formula.quantifier) {
+boundVars.push(formula.variable);
+var nmatrix = this.skolemize(formula.matrix, boundVars);
+if (nmatrix == formula.matrix) return formula;
+return new QuantifiedFormula(formula.quantifier, formula.variable, nmatrix,
+formula.overWorlds);
+}
+if (formula.sub1) {
+var nsub1 = this.skolemize(formula.sub1, boundVars);
+var nsub2 = this.skolemize(formula.sub2, boundVars);
+if (formula.sub1 == nsub1 && formula.sub2 == nsub2) return formula;
+return new BinaryFormula(formula.operator, nsub1, nsub2);
+}
+return formula;
+}
+ModelFinder.prototype.tseitinCNF = function(formula) {
+if (formula.type == 'literal') {
+return [[formula]];
+}
+if (formula.operator == '∧') {
+var res = this.tseitinCNF(formula.sub1).concatNoDuplicates(
+this.tseitinCNF(formula.sub2))
+res.sort(function(a,b){ return a.length - b.length; });
+return res;
+}
+var subformulas = this.tseitinSubFormulas([formula]).removeDuplicates();
+subformulas.sort(function(a,b) {
+return tseitinComplexity(a) - tseitinComplexity(b);
+});
+if (!this.tseitinFormulas) {
+this.tseitinFormulas = {};
+}
+var clauses = [];
+while (subformulas.length) {
+var subf = subformulas.shift();
+var p = this.tseitinFormulas[subf.string];
+if (!p) {
+var vars = this.parser.getVariables(subf);
+var pSym = this.parser.getNewSymbol('$', 'tseitin predicate', vars.length);
+this.parser.predicateArgTypes[pSym] = vars.map(function(v) {
+return this.parser.expressionType[v];
+}.bind(this));
+p = new AtomicFormula(pSym, vars);
+this.tseitinFormulas[subf.string] = p;
+var bicond = new BinaryFormula('↔', p, subf);
+clauses.extendNoDuplicates(this.cnf(bicond));
+}
+if (subformulas.length == 0) {
+clauses.extendNoDuplicates([[p]]);
+}
+for (var i=0; i<subformulas.length; i++) {
+subformulas[i] = this.tseitinReplace(subformulas[i], subf, p);
+}
+}
+clauses.sort(function(a,b){ return a.length - b.length; });
+return clauses;
+function tseitinComplexity(formula) {
+if (formula.sub) {
+return 1 + tseitinComplexity(formula.sub);
+}
+if (formula.sub1) {
+return 1 + Math.max(tseitinComplexity(formula.sub1),
+tseitinComplexity(formula.sub2));
+}
+return 0;
+}
+}
+ModelFinder.prototype.tseitinSubFormulas = function(formulas) {
+var res = []
+for (var i=0; i<formulas.length; i++) {
+if (formulas[i].type != 'literal') {
+var subformulas = formulas[i].sub ? [formulas[i].sub] :
+formulas[i].sub1 ? [formulas[i].sub1, formulas[i].sub2] : null;
+res.extend(this.tseitinSubFormulas(subformulas));
+res.unshift(formulas[i]);
+}
+}
+return res;
+}
+ModelFinder.prototype.tseitinReplace = function(formula, f1, f2) {
+if (formula.equals(f1)) return f2;
+if (formula.sub) {
+var nsub = this.tseitinReplace(formula.sub, f1, f2);
+if (nsub == formula.sub) return formula;
+return new NegatedFormula(nsub);
+}
+if (formula.sub1) {
+var nsub1 = this.tseitinReplace(formula.sub1, f1, f2);
+var nsub2 = this.tseitinReplace(formula.sub2, f1, f2);
+if (formula.sub1 == nsub1 && formula.sub2 == nsub2) return formula;
+return new BinaryFormula(formula.operator, nsub1, nsub2);
+}
+return formula;
+}
+ModelFinder.prototype.cnf = function(formula, maxClauses) {
+if (formula.type == 'literal') {
+return [[formula]];
+}
+var con, dis;
+switch (formula.operator) {
+case '∧': {
+con = [this.cnf(formula.sub1, maxClauses), this.cnf(formula.sub2, maxClauses)];
+break;
+}
+case '∨': {
+dis = [this.cnf(formula.sub1, maxClauses), this.cnf(formula.sub2, maxClauses)];
+break;
+}
+case '→': {
+dis = [this.cnf(formula.sub1.negate(), maxClauses), this.cnf(formula.sub2, maxClauses)];
+break;
+}
+case '↔' : {
+var con1 = this.cnf(new BinaryFormula('→', formula.sub1, formula.sub2), maxClauses);
+var con2 = this.cnf(new BinaryFormula('→', formula.sub2, formula.sub1), maxClauses);
+con = [con1, con2];
+break;
+}
+case '¬' : {
+var sub = formula.sub;
+switch (sub.operator) {
+case '∧': {
+dis = [this.cnf(sub.sub1.negate(), maxClauses), this.cnf(sub.sub2.negate(), maxClauses)];
+break;
+}
+case '∨': {
+con = [this.cnf(sub.sub1.negate(), maxClauses), this.cnf(sub.sub2.negate(), maxClauses)];
+break;
+}
+case '→': {
+con = [this.cnf(sub.sub1, maxClauses), this.cnf(sub.sub2.negate(), maxClauses)];
+break;
+}
+case '↔' : {
+var con1 = this.cnf(new BinaryFormula('∨', sub.sub1, sub.sub2), maxClauses);
+var con2 = this.cnf(new BinaryFormula('∨', sub.sub1.negate(), sub.sub2.negate()), maxClauses);
+con = [con1, con2];
+break;
+}
+case '¬' : {
+return this.cnf(sub.sub, maxClauses);
+}
+}
+}
+}
+if (con) return this.cnfAnd(con[0], con[1]);
+else if (dis) return this.cnfOr(dis[0], dis[1], maxClauses);
+else return [];
+}
+ModelFinder.prototype.cnfAnd = function(con1, con2) {
+if (con1.length === 0) return con2;
+if (con2.length === 0) return con1;
+const res = con1.slice();
+const seen = new Set();
+for (const cl of con1) seen.add(this.cnfClauseKey(cl));
+for (const cl of con2) {
+const key = this.cnfClauseKey(cl);
+if (seen.has(key)) continue;
+seen.add(key);
+res.push(cl);
+}
+return res;
+};
+ModelFinder.prototype.cnfOr = function(dis1, dis2, maxClauses) {
+const res = [];
+const seenClauses = new Set();
+if (dis1.length === 0 || dis2.length === 0) return [];
+if (dis1.length === 1 && dis1[0].length === 0) return dis2;
+if (dis2.length === 1 && dis2[0].length === 0) return dis1;
+if (dis1.length * dis2.length > maxClauses) {
+const err = new Error("CNF_TOO_BIG");
+throw err;
+}
+for (const cl1 of dis1) {
+for (const cl2 of dis2) {
+const merged = this.cnfNormalizeClause(cl1.concat(cl2));
+if (merged === null) continue;
+const key = this.cnfClauseKey(merged);
+if (seenClauses.has(key)) continue;
+seenClauses.add(key);
+res.push(merged);
+if (res.length > maxClauses) {
+const err = new Error("CNF_TOO_BIG");
+throw err;
+}
+}
+}
+return res;
+};
+ModelFinder.prototype.cnfClauseKey = function(clause) {
+return clause.cnfKey || (clause.cnfKey = clause.map(l => l.key()).join("\t"));
+};
+ModelFinder.prototype.cnfNormalizeClause = function(clause) {
+const seen = new Map();
+const res = [];
+for (const lit of clause) {
+const atomKey = (lit.sub || lit).key();
+const pol = lit.sub ? -1 : 1;
+const prev = seen.get(atomKey);
+if (prev === -pol) return null;
+if (prev === pol) continue;
+seen.set(atomKey, pol);
+res.push(lit);
+}
+res.sort((x, y) => x.key() < y.key() ? -1 : x.key() > y.key() ? 1 : 0);
+return res;
+};
+ModelFinder.prototype.simplifyClauses = function(clauseList) {
+const nl = [];
+const seen = new Set();
+for (const cl of clauseList) {
+const norm = this.cnfNormalizeClause(cl);
+if (norm === null) continue;
+const key = this.cnfClauseKey(norm);
+if (seen.has(key)) continue;
+seen.add(key);
+nl.push(norm);
+}
+nl.sort((a, b) => a.length - b.length);
+if (nl.length > 1000) {
+return nl;
+}
+var clauseIndex = new Map();
+var literals2clauses = {};
+for (var i=0; i<nl.length; i++) {
+clauseIndex.set(nl[i], i);
+for (var k=0; k<nl[i].length; k++) {
+var lit = nl[i][k].key();
+if (!literals2clauses[lit]) literals2clauses[lit] = [nl[i]];
+else literals2clauses[lit].push(nl[i]);
+}
+}
+var removed = new Set();
+for (var i=0; i<nl.length; i++) {
+var clause = nl[i];
+var lit = clause[0].key();
+var supersets = literals2clauses[lit].slice();
+for (var k=1; k<clause.length && supersets.length; k++) {
+lit = clause[k].key();
+supersets.intersect(literals2clauses[lit]);
+}
+for (var k=0; k<supersets.length; k++) {
+if (clauseIndex.get(supersets[k]) > i) {
+removed.add(supersets[k]);
+}
+}
+}
+return nl.filter(function(cl) { return !removed.has(cl); });
+}
+ModelFinder.prototype.nextStep = function() {
+if (!this.model.groundingDone) {
+this.model.groundIncremental(50);
+if (!this.model.groundingDone) return false;
+if (!this.model.initOk) {
+this.increaseDomain();
+return false;
+}
+var cell = this.model.selectCell();
+if (!cell) {
+this.model.buildInterpretation();
+return true;
+}
+this.searchStack.push({cell: cell, valueIdx: 0, trailMark: this.model.trail.length});
+}
+for (let step = 0; step < 100; step++) {
+if (this.searchStack.length === 0) {
+this.increaseDomain();
+return false;
+}
+var searchPoint = this.searchStack[this.searchStack.length - 1];
+var depth = this.searchStack.length;
+this.model.undoToMark(searchPoint.trailMark);
+searchPoint.trailMark = this.model.trail.length;
+var values = this.model.getCellValues(searchPoint.cell);
+if (searchPoint.valueIdx >= values.length) {
+this.searchStack.pop();
+continue;
+}
+var value = values[searchPoint.valueIdx];
+searchPoint.valueIdx++;
+var ok = this.model.assignCell(searchPoint.cell, value);
+if (ok) {
+var nextCell = this.model.selectCell();
+if (!nextCell) {
+this.model.buildInterpretation();
+return true;
+}
+this.searchStack.push({cell: nextCell, valueIdx: 0, trailMark: this.model.trail.length});
+}
+}
+return false;
+}
+ModelFinder.prototype.increaseDomain = function() {
+var numWorlds = this.model.worlds.length;
+var numIndividuals = this.model.domain.length;
+if (numWorlds) {
+if (this.parser.isPropositional) {
+numWorlds++;
+}
+else {
+if (numIndividuals > 1) {
+numIndividuals -= 1;
+numWorlds += 1;
+}
+else {
+var total = numWorlds + numIndividuals + 1;
+numWorlds = 1;
+numIndividuals = total - 1;
+}
+}
+}
+else {
+numIndividuals++;
+}
+this.model = new Model(this, numIndividuals, numWorlds);
+this.searchStack = [];
+}
+function Model(modelfinder, numIndividuals, numWorlds) {
+this.modelfinder = modelfinder;
+this.parser = modelfinder.parser;
+this.domain = Array.getArrayOfNumbers(numIndividuals);
+this.worlds = Array.getArrayOfNumbers(numWorlds);
+this.isModal = numWorlds > 0;
+var terms = this.getTerms();
+this.indivTerms = terms[0];
+this.worldTerms = terms[1];
+this.cells = [];
+this.cellIndex = {};
+this.groundClauses = [];
+this.trail = [];
+this.createCells();
+this.groundingDone = false;
+this.initOk = true;
+this.groundingQueue = [];
+this.clauseInfos = this.prepareClauseInfos();
+this.groundingClauseIdx = 0;
+this.groundingTuple = null;
+this.rootedWorldClausesAdded = false;
+this.interpretation = {};
+}
+function Cell(id, symbol, args, possibleValues, isFunction) {
+this.id = id;
+this.symbol = symbol;
+this.args = args;
+this.value = null;
+this.possible = possibleValues.slice();
+this.isFunction = isFunction;
+this.occurrences = [];
+this.occurrenceKeys = new Set();
+this.fixed = false;
+this.maxIndex = 0;
+for (var i=0; i<args.length; i++) {
+if (args[i] > this.maxIndex) this.maxIndex = args[i];
+}
+}
+function GroundClause(index, literals) {
+this.index = index;
+this.literals = literals;
+this.satisfied = false;
+this.numActive = literals.length;
+}
+function GroundLiteral(positive, predicate, terms, termCellIds) {
+this.positive = positive;
+this.predicate = predicate;
+this.terms = terms;
+this.termCellIds = termCellIds;
+this.active = true;
+}
+Model.prototype.createCells = function() {
+var parser = this.parser;
+for (var i=0; i<parser.symbols.length; i++) {
+var s = parser.symbols[i];
+var stype = parser.expressionType[s];
+if (stype == 'individual constant' || stype == 'world constant') {
+var cellId = s;
+var valueDomain = (stype == 'world constant') ? this.worlds : this.domain;
+var cell = new Cell(cellId, s, [], valueDomain.slice(), true);
+this.cells.push(cell);
+this.cellIndex[cellId] = cell;
+}
+else if (stype.indexOf('function symbol') > -1) {
+var arity = parser.arities[s];
+var isWorld = stype.indexOf('world') > -1;
+var valueDomain = isWorld ? this.worlds : this.domain;
+var argDomains = this.getFunctionArgDomains(s, arity);
+var tuples = Model.getMixedTuples(argDomains);
+for (var j=0; j<tuples.length; j++) {
+var args = tuples[j];
+var termArr = [s].concat(args);
+var cellId = termArr.toString();
+var cell = new Cell(cellId, s, args, valueDomain.slice(), true);
+this.cells.push(cell);
+this.cellIndex[cellId] = cell;
+}
+}
+else if (stype.indexOf('predicate') > -1 || stype.indexOf('sentence letter') > -1) {
+var arity = parser.arities[s] || 0;
+if (arity == 0) {
+var cellId = s + '[]';
+var cell = new Cell(cellId, s, [], [false, true], false);
+this.cells.push(cell);
+this.cellIndex[cellId] = cell;
+}
+else {
+var argDomains = this.getPredicateArgDomains(s, arity);
+var tuples = Model.getMixedTuples(argDomains);
+for (var j=0; j<tuples.length; j++) {
+var args = tuples[j];
+var cellId = s + args.toString();
+var cell = new Cell(cellId, s, args, [false, true], false);
+this.cells.push(cell);
+this.cellIndex[cellId] = cell;
+}
+}
+}
+}
+if (this.parser.expressionType['=']) {
+var eqWorlds = this.worlds.length > 0 ? this.worlds : [null];
+for (var i=0; i<this.domain.length; i++) {
+for (var j=0; j<this.domain.length; j++) {
+for (var wi=0; wi<eqWorlds.length; wi++) {
+var args = eqWorlds[wi] !== null ? [i,j,eqWorlds[wi]] : [i,j];
+var cellId = '=' + args.toString();
+var cell = this.cellIndex[cellId];
+if (cell) {
+cell.value = (i === j);
+cell.possible = [];
+cell.fixed = true;
+}
+}
+}
+}
+}
+};
+Model.prototype.getPredicateArgDomains = function(predicate, arity) {
+var domains = [];
+if (!this.isModal) {
+for (var i=0; i<arity; i++) domains.push(this.domain);
+return domains;
+}
+var parser = this.parser;
+var argTypes = parser.predicateArgTypes[predicate];
+if (argTypes) {
+var self = this;
+return argTypes.map(function(t) {
+return t === 'world variable' ? self.worlds : self.domain;
+});
+}
+for (var i=0; i<arity; i++) {
+if (predicate === parser.R) {
+domains.push(this.worlds);
+}
+else if (i === arity - 1) {
+domains.push(this.worlds);
+}
+else {
+domains.push(this.domain);
+}
+}
+return domains;
+};
+Model.prototype.getFunctionArgDomains = function(funcSymbol, arity) {
+var argTypes = this.parser.functionArgTypes[funcSymbol];
+if (argTypes) {
+var self = this;
+return argTypes.map(function(t) {
+return t === 'world variable' ? self.worlds : self.domain;
+});
+}
+var isWorld = this.parser.expressionType[funcSymbol].indexOf('world') > -1;
+var domain = isWorld ? this.worlds : this.domain;
+var domains = [];
+for (var i=0; i<arity; i++) domains.push(domain);
+return domains;
+};
+Model.getMixedTuples = function(argDomains) {
+if (argDomains.length == 0) return [[]];
+var res = [];
+var tuple = Array.getArrayOfZeroes(argDomains.length);
+var maxValues = argDomains.map(function(d) { return d.length - 1; });
+res.push(tuple.copy());
+while (Model.iterateTuple(tuple, maxValues)) {
+res.push(tuple.copy());
+}
+return res;
+};
+Model.prototype.prepareClauseInfos = function() {
+var parser = this.parser;
+var clauses = this.modelfinder.clauses;
+var clauseInfos = [];
+for (var c = 0; c < clauses.length; c++) {
+var variables = [];
+for (var i = 0; i < clauses[c].length; i++) {
+variables.extendNoDuplicates(parser.getVariables(clauses[c][i]));
+}
+var maxValues = [];
+for (var vi = 0; vi < variables.length; vi++) {
+maxValues.push(parser.expressionType[variables[vi]] == 'variable' ? this.domain.length - 1 : this.worlds.length - 1);
+}
+clauseInfos.push({clause: clauses[c], variables: variables, maxValues: maxValues});
+}
+clauseInfos.sort(function(a, b) { return a.variables.length - b.variables.length; });
+return clauseInfos;
+};
+Model.prototype.groundIncremental = function(timeLimit) {
+var t0 = performance.now();
+var queue = this.groundingQueue;
+var self = this;
+function processClause(groundClause) {
+if (!self.addSimplifiedClause(groundClause, queue) || !self.drainQueue(queue)) {
+self.initOk = false;
+self.groundingDone = true;
+return false;
+}
+return true;
+}
+while (this.groundingClauseIdx < this.clauseInfos.length) {
+var info = this.clauseInfos[this.groundingClauseIdx];
+var clause = info.clause;
+var variables = info.variables;
+if (variables.length === 0) {
+if (!processClause(clause)) return;
+this.groundingClauseIdx++;
+this.groundingTuple = null;
+continue;
+}
+if (!this.groundingTuple) {
+this.groundingTuple = Array.getArrayOfZeroes(variables.length);
+}
+do {
+var interpretation = this.groundingTuple;
+var nclause = clause.map(function(formula) {
+var nformula = formula;
+for (var j = 0; j < variables.length; j++) {
+nformula = nformula.substitute(variables[j], interpretation[j]);
+}
+return nformula;
+});
+if (!processClause(nclause)) return;
+if (performance.now() - t0 > timeLimit) return;
+} while (Model.iterateTuple(this.groundingTuple, info.maxValues));
+this.groundingClauseIdx++;
+this.groundingTuple = null;
+}
+if (!this.rootedWorldClausesAdded) {
+this.rootedWorldClausesAdded = true;
+if (!this.addRootedWorldClauses(queue)) {
+this.initOk = false;
+this.groundingDone = true;
+return;
+}
+}
+this.groundingDone = true;
+};
+Model.prototype.addSimplifiedClause = function(formulaClause, queue) {
+var lits = [];
+var skip = false;
+for (var li = 0; li < formulaClause.length; li++) {
+var tv = this.evaluateFormula(formulaClause[li]);
+if (tv === true) {
+skip = true;
+break;
+}
+if (tv === false) {
+continue;
+}
+lits.push(formulaClause[li]);
+}
+if (skip) return true;
+if (lits.length === 0) return false;
+var atomPol = new Map();
+var deduped = [];
+for (var i = 0; i < lits.length; i++) {
+var atom = lits[i].sub || lits[i];
+var atomKey = atom.key();
+var pol = lits[i].sub ? -1 : 1;
+var prev = atomPol.get(atomKey);
+if (prev === -pol) return true;
+if (prev === pol) continue;
+atomPol.set(atomKey, pol);
+deduped.push(lits[i]);
+}
+lits = deduped;
+var ci = this.groundClauses.length;
+var groundLits = [];
+for (var li = 0; li < lits.length; li++) {
+var formula = lits[li];
+var atom = formula.sub || formula;
+var positive = (atom === formula);
+var predicate = atom.predicate;
+var terms = atom.terms;
+var termCellIds = this.collectTermCellIds(terms);
+groundLits.push(new GroundLiteral(positive, predicate, terms, termCellIds));
+}
+var gc = new GroundClause(ci, groundLits);
+this.groundClauses.push(gc);
+for (var li = 0; li < groundLits.length; li++) {
+var lit = groundLits[li];
+var occ = {clauseIdx: ci, litIdx: li};
+var reducedTerms = this.reduceTermsFromCells(lit.terms);
+var allGround = true;
+for (var ti = 0; ti < reducedTerms.length; ti++) {
+if (typeof reducedTerms[ti] !== 'number') { allGround = false; break; }
+}
+if (allGround) {
+var predCellId = lit.predicate + reducedTerms.toString();
+if (this.cellIndex[predCellId]) {
+this.cellIndex[predCellId].occurrences.push(occ);
+}
+}
+for (var ti = 0; ti < lit.termCellIds.length; ti++) {
+var tcid = lit.termCellIds[ti];
+if (this.cellIndex[tcid]) {
+this.cellIndex[tcid].occurrences.push(occ);
+}
+}
+if (lits.length === 1 && !allGround) {
+var funcInfo = this.identifyFunctionTerm(reducedTerms);
+if (funcInfo) {
+lit.funcArgPos = funcInfo.pos;
+lit.funcCellId = funcInfo.cellId;
+var funcCell = this.cellIndex[funcInfo.cellId];
+var valueDomain = funcCell ? funcCell.possible : this.domain;
+for (var vi = 0; vi < valueDomain.length; vi++) {
+var args = reducedTerms.slice();
+args[funcInfo.pos] = valueDomain[vi];
+var predCellId = lit.predicate + args.toString();
+if (this.cellIndex[predCellId]) {
+this.registerOccurrence(this.cellIndex[predCellId], occ);
+}
+}
+}
+}
+}
+if (gc.numActive === 1) {
+var forced = this.forceLiteral(gc);
+if (forced === false) return false;
+if (forced) queue.push(forced);
+}
+return true;
+};
+Model.prototype.addRootedWorldClauses = function(queue) {
+if (!this.isModal) return true;
+if (this.modelfinder.s5) return true;
+var R = this.parser.R;
+for (var w = 1; w < this.worlds.length; w++) {
+var clause = [];
+for (var u = 0; u < w; u++) {
+clause.push(new AtomicFormula(R, [u, w]));
+}
+if (!this.addSimplifiedClause(clause, queue)) return false;
+if (!this.drainQueue(queue)) return false;
+}
+return true;
+};
+Model.prototype.evaluateFormula = function(formula) {
+var atom = formula.sub || formula;
+var positive = (atom === formula);
+var predicate = atom.predicate;
+var reducedTerms = this.reduceTermsFromCells(atom.terms);
+for (var i = 0; i < reducedTerms.length; i++) {
+if (typeof reducedTerms[i] !== 'number') return null;
+}
+if (predicate === '=') {
+var eqVal = (reducedTerms[0] === reducedTerms[1]);
+return positive ? eqVal : !eqVal;
+}
+var predCellId = predicate + reducedTerms.toString();
+var predCell = this.cellIndex[predCellId];
+if (!predCell) return null;
+if (predCell.value === null) return null;
+return positive ? predCell.value : !predCell.value;
+};
+Model.prototype.drainQueue = function(queue) {
+while (queue.length > 0) {
+var forced = queue.shift();
+if (forced.cell.value !== null) {
+if (forced.cell.value !== forced.value) {
+return false;
+}
+continue;
+}
+this.trail.push({type: 'assign', cell: forced.cell, oldPossible: forced.cell.possible});
+forced.cell.value = forced.value;
+forced.cell.possible = [];
+if (!this.processOccurrences(forced.cell, queue)) {
+return false;
+}
+}
+return true;
+};
+Model.prototype.identifyFunctionTerm = function(reducedTerms) {
+var funcPos = -1;
+for (var i=0; i<reducedTerms.length; i++) {
+if (typeof reducedTerms[i] !== 'number') {
+if (funcPos >= 0) return null;
+funcPos = i;
+}
+}
+if (funcPos < 0) return null;
+var term = reducedTerms[funcPos];
+if (!term.isArray) return null;
+for (var i=1; i<term.length; i++) {
+if (typeof term[i] !== 'number') return null;
+}
+return {pos: funcPos, cellId: term.toString()};
+};
+Model.prototype.collectTermCellIds = function(terms) {
+var ids = [];
+for (var i=0; i<terms.length; i++) {
+this.collectTermCellIdsRec(terms[i], ids);
+}
+return ids;
+};
+Model.prototype.collectTermCellIdsRec = function(term, ids) {
+if (typeof term === 'number') return;
+if (term.isArray) {
+for (var i=1; i<term.length; i++) {
+this.collectTermCellIdsRec(term[i], ids);
+}
+var reduced = this.reduceTermFromCells(term);
+if (typeof reduced !== 'number') {
+var cellId = reduced.toString();
+if (this.cellIndex[cellId] && ids.indexOf(cellId) === -1) {
+ids.push(cellId);
+}
+}
+}
+else {
+if (this.cellIndex[term] && ids.indexOf(term) === -1) {
+ids.push(term);
+}
+}
+};
+Model.prototype.reduceTermFromCells = function(term) {
+if (typeof term === 'number') return term;
+if (term.isArray) {
+var nterm = [term[0]];
+for (var i=1; i<term.length; i++) {
+nterm.push(this.reduceTermFromCells(term[i]));
+}
+var cell = this.cellIndex[nterm.toString()];
+if (cell && cell.value !== null) return cell.value;
+return nterm;
+}
+var cell = this.cellIndex[term];
+if (cell && cell.value !== null) return cell.value;
+return term;
+};
+Model.prototype.reduceTermsFromCells = function(terms) {
+var res = [];
+for (var i=0; i<terms.length; i++) {
+res.push(this.reduceTermFromCells(terms[i]));
+}
+return res;
+};
+Model.prototype.getTerms = function() {
+var indivTerms = [];
+var worldTerms = this.parser.isModal ? [this.parser.w] : [];
+for (var i=0; i<this.parser.symbols.length; i++) {
+var s = this.parser.symbols[i];
+var stype = this.parser.expressionType[s];
+if (stype == 'individual constant') {
+indivTerms.push(s);
+}
+else if (stype.indexOf('function symbol') > -1) {
+var arity = this.parser.arities[s];
+var isWorldResult = stype.indexOf('world') > -1;
+var targetList = isWorldResult ? worldTerms : indivTerms;
+var argDomains = this.getFunctionArgDomains(s, arity);
+Model.getMixedTuples(argDomains).forEach(function(li) {
+li.unshift(s);
+targetList.push(li.toString());
+});
+}
+}
+indivTerms.sort(function(a,b){ return a.length - b.length; });
+worldTerms.sort(function(a,b){ return a.length - b.length; });
+return [indivTerms, worldTerms];
+}
+Model.iterateTuple = function(tuple, maxValues) {
+for (var i=tuple.length-1; i>=0; i--) {
+if (tuple[i] < maxValues[i]) {
+tuple[i]++;
+return true;
+}
+tuple[i] = 0;
+}
+return false;
+}
+Model.prototype.isWorldTerm = function(term) {
+if (!this.parser.isModal) {
+return false;
+}
+if (term.isArray) {
+return this.isWorldTerm(term[0]);
+}
+return (this.parser.expressionType[term].indexOf("world") > -1);
+}
+Model.prototype.getMaxValue = function(term, termStr) {
+var isWorldTerm = this.isWorldTerm(term);
+var domain = isWorldTerm ? this.worlds : this.domain;
+var termList = isWorldTerm ? this.worldTerms : this.indivTerms;
+var maxValue = domain.length - 1;
+var index = termList.indexOf(termStr);
+if (index > -1 && index < maxValue) {
+maxValue = index;
+if (term.isArray) {
+for (var i=1; i<term.length; i++) {
+if (term[i] >= maxValue) {
+maxValue = term[i] + 1;
+}
+}
+}
+}
+return maxValue;
+}
+Model.prototype.undoToMark = function(mark) {
+while (this.trail.length > mark) {
+var entry = this.trail.pop();
+switch (entry.type) {
+case 'assign':
+entry.cell.value = null;
+entry.cell.possible = entry.oldPossible;
+break;
+case 'eliminate':
+entry.cell.possible.push(entry.value);
+break;
+case 'satisfy':
+entry.clause.satisfied = false;
+break;
+case 'deactivate':
+entry.clause.literals[entry.litIdx].active = true;
+entry.clause.numActive++;
+break;
+}
+}
+};
+Model.prototype.assignCell = function(cell, value) {
+this.trail.push({type: 'assign', cell: cell, oldPossible: cell.possible});
+cell.value = value;
+cell.possible = [];
+var queue = [];
+if (!this.processOccurrences(cell, queue)) return false;
+return this.drainQueue(queue);
+};
+Model.prototype.processOccurrences = function(cell, queue) {
+for (var oi=0; oi<cell.occurrences.length; oi++) {
+var occ = cell.occurrences[oi];
+var gc = this.groundClauses[occ.clauseIdx];
+if (gc.satisfied) continue;
+var lit = gc.literals[occ.litIdx];
+if (!lit.active) continue;
+var tv = this.evaluateLiteral(lit, occ);
+if (tv === true) {
+this.trail.push({type: 'satisfy', clause: gc});
+gc.satisfied = true;
+}
+else if (tv === false) {
+this.trail.push({type: 'deactivate', clause: gc, litIdx: occ.litIdx});
+lit.active = false;
+gc.numActive--;
+if (gc.numActive === 0) {
+return false;
+}
+if (gc.numActive === 1) {
+var forced = this.forceLiteral(gc);
+if (forced === false) {
+return false;
+}
+if (forced) {
+queue.push(forced);
+}
+}
+}
+else if (gc.numActive === 1) {
+var forced = this.forceLiteral(gc);
+if (forced === false) {
+return false;
+}
+if (forced) {
+queue.push(forced);
+}
+else if (!cell.isFunction && lit.funcCellId) {
+var violated = lit.positive ? (cell.value === false) : (cell.value === true);
+if (violated) {
+var crossOff = this.eliminateValue(lit.funcCellId, cell.args[lit.funcArgPos], queue);
+if (crossOff === false) return false;
+}
+}
+}
+}
+return true;
+};
+Model.prototype.evaluateLiteral = function(lit, occ) {
+var reducedTerms = this.reduceTermsFromCells(lit.terms);
+for (var i=0; i<reducedTerms.length; i++) {
+if (typeof reducedTerms[i] !== 'number') {
+if (occ) this.registerNewDependencies(reducedTerms, occ);
+return null;
+}
+}
+if (lit.predicate === '=') {
+var atomVal = (reducedTerms[0] === reducedTerms[1]);
+return lit.positive ? atomVal : !atomVal;
+}
+var predCellId = lit.predicate + reducedTerms.toString();
+var predCell = this.cellIndex[predCellId];
+if (!predCell) {
+return null;
+}
+if (predCell.value === null) {
+if (occ) {
+var dup = this.checkSameClauseDedup(predCell, occ, lit.positive, predCellId);
+if (dup !== null) return dup;
+this.registerOccurrence(predCell, occ);
+}
+return null;
+}
+return lit.positive ? predCell.value : !predCell.value;
+};
+Model.prototype.checkSameClauseDedup = function(predCell, occ, litPositive, predCellId) {
+for (var k=0; k<predCell.occurrences.length; k++) {
+var other = predCell.occurrences[k];
+if (other.clauseIdx !== occ.clauseIdx) continue;
+if (other.litIdx === occ.litIdx) continue;
+var otherLit = this.groundClauses[other.clauseIdx].literals[other.litIdx];
+if (!otherLit.active) continue;
+var otherReduced = this.reduceTermsFromCells(otherLit.terms);
+var allGround = true;
+for (var i=0; i<otherReduced.length; i++) {
+if (typeof otherReduced[i] !== 'number') { allGround = false; break; }
+}
+if (!allGround) continue;
+if (otherLit.predicate + otherReduced.toString() !== predCellId) continue;
+return (otherLit.positive === litPositive) ? false : true;
+}
+return null;
+};
+Model.prototype.registerNewDependencies = function(reducedTerms, occ) {
+for (var i=0; i<reducedTerms.length; i++) {
+this.registerTermDependencies(reducedTerms[i], occ);
+}
+};
+Model.prototype.registerTermDependencies = function(term, occ) {
+if (typeof term === 'number') return;
+if (term.isArray) {
+var allArgsGround = true;
+for (var i=1; i<term.length; i++) {
+if (typeof term[i] !== 'number') {
+allArgsGround = false;
+this.registerTermDependencies(term[i], occ);
+}
+}
+if (allArgsGround) {
+var cellId = term.toString();
+var cell = this.cellIndex[cellId];
+if (cell) {
+this.registerOccurrence(cell, occ);
+}
+}
+}
+else {
+var cell = this.cellIndex[term];
+if (cell) {
+this.registerOccurrence(cell, occ);
+}
+}
+};
+Model.prototype.registerOccurrence = function(cell, occ) {
+var key = occ.clauseIdx + ':' + occ.litIdx;
+if (cell.occurrenceKeys.has(key)) return;
+cell.occurrenceKeys.add(key);
+cell.occurrences.push(occ);
+};
+Model.prototype.eliminateValue = function(funcCellId, value, queue) {
+var funcCell = this.cellIndex[funcCellId];
+if (!funcCell || funcCell.value !== null) return null;
+var idx = funcCell.possible.indexOf(value);
+if (idx < 0) return null;
+this.trail.push({type: 'eliminate', cell: funcCell, value: value});
+funcCell.possible.splice(idx, 1);
+if (funcCell.possible.length === 0) {
+return false;
+}
+if (funcCell.possible.length === 1) {
+queue.push({cell: funcCell, value: funcCell.possible[0]});
+}
+return null;
+};
+Model.prototype.forceLiteral = function(gc) {
+var lit = null;
+var litIdx = -1;
+for (var i=0; i<gc.literals.length; i++) {
+if (gc.literals[i].active) {
+lit = gc.literals[i];
+litIdx = i;
+break;
+}
+}
+if (!lit) return false;
+var occ = {clauseIdx: gc.index, litIdx: litIdx};
+var reducedTerms = this.reduceTermsFromCells(lit.terms);
+if (lit.predicate === '=') {
+var a = reducedTerms[0], b = reducedTerms[1];
+var aNum = typeof a === 'number', bNum = typeof b === 'number';
+if (aNum && bNum) {
+if (lit.positive === (a === b)) {
+this.trail.push({type: 'satisfy', clause: gc});
+gc.satisfied = true;
+return null;
+}
+return false;
+}
+if (lit.positive && (aNum || bNum)) {
+var cellSide = aNum ? b : a, val = aNum ? a : b;
+var ground = cellSide.isArray;
+for (var i=1; ground && i<cellSide.length; i++) {
+if (typeof cellSide[i] !== 'number') ground = false;
+}
+var fcell = ground && this.cellIndex[cellSide.toString()];
+if (fcell && fcell.isFunction) {
+if (fcell.value === val) {
+this.trail.push({type: 'satisfy', clause: gc});
+gc.satisfied = true;
+return null;
+}
+if (fcell.value !== null) return false;
+if (fcell.possible.indexOf(val) === -1) return false;
+return {cell: fcell, value: val};
+}
+}
+this.registerNewDependencies(reducedTerms, occ);
+return null;
+}
+for (var i=0; i<reducedTerms.length; i++) {
+if (typeof reducedTerms[i] !== 'number') {
+this.registerNewDependencies(reducedTerms, occ);
+return null;
+}
+}
+var predCellId = lit.predicate + reducedTerms.toString();
+var predCell = this.cellIndex[predCellId];
+if (!predCell) return null;
+var forcedValue = lit.positive;
+if (predCell.value !== null) {
+if (predCell.value === forcedValue) {
+this.trail.push({type: 'satisfy', clause: gc});
+gc.satisfied = true;
+return null;
+}
+return false;
+}
+return {cell: predCell, value: forcedValue};
+};
+Model.prototype.selectCell = function() {
+var best = null;
+var bestIsFunc = false;
+var bestPossible = Infinity;
+var bestMaxIndex = Infinity;
+for (var i=0; i<this.cells.length; i++) {
+var cell = this.cells[i];
+if (cell.fixed) continue;
+if (cell.value !== null) continue;
+if (cell.occurrences.length === 0) continue;
+var np = cell.possible.length;
+var isFunc = cell.isFunction;
+if ((isFunc && !bestIsFunc) ||
+(isFunc === bestIsFunc && (np < bestPossible || (np === bestPossible && cell.maxIndex < bestMaxIndex)))) {
+best = cell;
+bestIsFunc = isFunc;
+bestPossible = np;
+bestMaxIndex = cell.maxIndex;
+}
+}
+return best;
+};
+Model.prototype.getCellValues = function(cell) {
+if (!cell.isFunction) {
+return cell.possible.slice();
+}
+var termStr = cell.id;
+var term = cell.args.length > 0 ? [cell.symbol].concat(cell.args) : cell.symbol;
+var maxValue = this.getMaxValue(term, termStr);
+var values = [];
+for (var i=0; i<cell.possible.length; i++) {
+if (cell.possible[i] <= maxValue) {
+values.push(cell.possible[i]);
+}
+}
+return values;
+};
+Model.prototype.buildInterpretation = function() {
+this.interpretation = {};
+for (var i=0; i<this.cells.length; i++) {
+var cell = this.cells[i];
+if (cell.fixed) continue;
+if (cell.value !== null) {
+this.interpretation[cell.id] = cell.value;
+}
+}
+};
+Model.prototype.verifyModel = function() {
+for (var ci=0; ci<this.groundClauses.length; ci++) {
+var gc = this.groundClauses[ci];
+var satisfied = false;
+for (var li=0; li<gc.literals.length; li++) {
+var tv = this.evaluateLiteral(gc.literals[li]);
+if (tv === true) {
+satisfied = true;
+break;
+}
+}
+if (!satisfied) {
+return false;
+}
+}
+return true;
+};
+Model.prototype.toHTML = function() {
+var str = "<table>";
+if (this.parser.isModal) {
+function w(num) {
+return 'w<sub>'+num+'</sub>';
+}
+str += "<tr><td align='right'>Worlds: </td><td align='left'>{ ";
+str += this.worlds.map(function(n){return w(n)}).join(", ");
+str += " }</td></tr>\n";
+if (!this.parser.isPropositional) {
+str += "<tr><td align='right'>Individuals: </td><td align='left'>{ ";
+str += this.domain.join(", ");
+str += " }</td></tr>\n";
+}
+}
+else if (!this.parser.isPropositional) {
+str += "<tr><td align='right'>Domain: </td><td align='left'>{ ";
+str += this.domain.join(", ");
+str += " }</td></tr>\n";
+}
+var extensions = this.getExtensions();
+for (var i=0; i<this.modelfinder.constants.length; i++) {
+var sym = this.modelfinder.constants[i];
+var ext = extensions[sym];
+var val = sym == this.parser.w ? w(ext) : ext;
+if (sym == this.parser.w) sym = '@';
+else sym = this.modelfinder.numericConstRestore[sym] || sym;
+str += "<tr><td align='right' class='formula'>" + sym + ": </td><td align='left'>" + val + "</td></tr>\n";
+}
+for (var i=0; i<this.modelfinder.funcSymbols.length; i++) {
+var sym = this.modelfinder.funcSymbols[i];
+var ext = extensions[sym];
+if (ext.length > 0 && !ext[0].isArray) {
+var val = '{ '+ext.join(',')+' }';
+}
+else {
+var val = '{ '+ext.map(function(tuple) {
+return '('+tuple.join(',')+')';
+}).join(', ')+' }';
+}
+str += "<tr><td align='right' class='formula'>" + sym + ": </td><td align='left'>" + val + "</td></tr>\n";
+}
+var isModal = this.parser.isModal;
+var R = this.parser.R;
+for (var i=0; i<this.modelfinder.predicates.length; i++) {
+var sym = this.modelfinder.predicates[i];
+if (sym == '=') continue;
+var ext = extensions[sym];
+var val;
+if (!ext.isArray) {
+val = ext;
+}
+else if (ext.length > 0 && !ext[0].isArray) {
+if (isModal) ext = ext.map(function(n){return w(n)});
+val = '{ '+ext.join(',')+' }';
+}
+else {
+val = '{ '+ext.map(function(tuple) {
+if (isModal) {
+tuple[tuple.length-1] = w(tuple[tuple.length-1]);
+if (sym == R) tuple[0] = w(tuple[0]);
+}
+return '('+tuple.join(',')+')';
+}).join(', ')+' }';
+}
+if (sym == R && sym != 'R') {
+sym = 'Accessibility'
+}
+str += "<tr><td align='right' class='formula'>" + sym + ": </td><td align='left'>" + val + "</td></tr>\n";
+}
+str += "</table>";
+return str;
+}
+Model.prototype.getExtensions = function() {
+var result = {};
+for (var i=0; i<this.modelfinder.constants.length; i++) {
+var cons = this.modelfinder.constants[i];
+result[cons] = this.interpretation[cons] || 0;
+}
+var interpretedStrings = Object.keys(this.interpretation);
+for (var i=0; i<this.modelfinder.funcSymbols.length; i++) {
+var f = this.modelfinder.funcSymbols[i];
+result[f] = [];
+for (var j=0; j<interpretedStrings.length; j++) {
+var expr = interpretedStrings[j];
+if (expr.indexOf('['+f+',') == 0) {
+var args = expr.slice(1,-1).split(',');
+args.shift();
+var val = this.interpretation[expr];
+result[f].push(args.concat([val]));
+}
+}
+result[f] = this.makeFunctionExtensionTotal(f, result[f]);
+}
+for (var i=0; i<this.modelfinder.predicates.length; i++) {
+var p = this.modelfinder.predicates[i];
+result[p] = (this.parser.arities[p] == 0) ? false : [];
+for (var j=0; j<interpretedStrings.length; j++) {
+var expr = interpretedStrings[j];
+if (expr.indexOf(p+'[') == 0) {
+var val = this.interpretation[expr];
+var args = expr.substr(p.length).slice(1,-1).split(',');
+if (args[0] == '') {
+result[p] = val;
+}
+else {
+if (!val) continue;
+if (args.length == 1) {
+result[p].push(args[0]);
+}
+else {
+result[p].push(args);
+}
+}
+}
+}
+}
+return result;
+}
+Model.prototype.makeFunctionExtensionTotal = function(f, extension) {
+var arity = this.parser.arities[f];
+var args = Array.getArrayOfZeroes(arity);
+var maxValue = this.domain.length - 1;
+var maxValues = args.map(function(x){ return maxValue; });
+var extByArgs = new Map();
+for (var i=0; i<extension.length; i++) {
+extByArgs.set(extension[i].slice(0,-1).join(','), extension[i]);
+}
+var res = [];
+do {
+var entry = extByArgs.get(args.join(','));
+res.push(entry || args.concat([0]));
+} while (Model.iterateTuple(args, maxValues));
+return res;
+}
+Model.prototype.toString = function() {
+return this.toHTML().replace(/<.+?>/g, '');
+}
+Model.prototype.unassignedCount = function() {
+var n = 0;
+for (var i=0; i<this.cells.length; i++) {
+var c = this.cells[i];
+if (!c.fixed && c.value === null && c.occurrences.length > 0) n++;
+}
+return n;
+};
+Model.prototype.activeClauseCount = function() {
+var n = 0;
+for (var i=0; i<this.groundClauses.length; i++) {
+if (!this.groundClauses[i].satisfied) n++;
+}
+return n;
+};
+function SenTree(fvTree, parser) {
+this.nodes = [];
+this.isClosed = (fvTree.openBranches.length == 0);
+this.initFormulas = fvTree.prover.initFormulas;
+this.initFormulasNonModal = fvTree.prover.initFormulasNonModal;
+this.initFormulasNNF = fvTree.prover.initFormulasNNF;
+this.fvTree = fvTree;
+this.parser = parser;
+this.fvParser = fvTree.parser;
+this.markEndNodesClosed();
+this.transferNodes();
+this.removeUnusedNodes();
+this.replaceFreeVariablesAndSkolemTerms();
+if (parser.isModal) this.modalize();
+this.findComplementaryNodes();
+}
+SenTree.prototype.markEndNodesClosed = function() {
+for (var i=0; i<this.fvTree.closedBranches.length; i++) {
+var branch = this.fvTree.closedBranches[i];
+branch.nodes[branch.nodes.length-1].closedEnd = true;
+}
+}
+SenTree.prototype.findComplementaryNodes = function() {
+for (var i=0; i<this.fvTree.closedBranches.length; i++) {
+var branch = this.fvTree.closedBranches[i];
+this.findComplementaryNodesOnBranch(branch);
+}
+}
+SenTree.prototype.findComplementaryNodesOnBranch = function(branch) {
+var lastNode = branch.nodes[branch.nodes.length-1];
+while (lastNode.children[0]) lastNode = lastNode.children[0];
+var n1 = lastNode;
+var n2 = lastNode;
+while (n1) {
+while ((n2 = n2.parent)) {
+if ((n1.formula.operator == '¬' && n1.formula.sub.string == n2.formula.string)
+|| (n2.formula.operator == '¬' && n2.formula.sub.string == n1.formula.string)) {
+if (n1.formula.world == n2.formula.world) {
+lastNode.closedBy = [n1, n2];
+return;
+}
+else if (n1.formula.predicate == '=' || n2.formula.predicate == '=') {
+lastNode.closedBy = null;
+this.insertRigidIdentity(n1, n2);
+return;
+}
+}
+};
+if (n1.formula.operator == '¬' && n1.formula.sub.predicate == '='
+&& n1.formula.sub.terms[0].toString() == n1.formula.sub.terms[1].toString()) {
+lastNode.closedBy = [n1];
+return;
+}
+n1 = n1.parent;
+n2 = lastNode;
+}
+}
+SenTree.prototype.insertRigidIdentity = function(n1, n2) {
+var identityNode = n1.formula.operator == '¬' ? n2 : n1;
+var negIdentityNode = n1.formula.operator == '¬' ? n1 : n2;
+var targetWorld = negIdentityNode.formula.world;
+var newFormula = new AtomicFormula('=', identityNode.formula.terms);
+newFormula.world = targetWorld;
+var newNode = new Node(newFormula, null, [identityNode]);
+this.makeNode(newNode);
+newNode.parent = n1;
+newNode.children = [];
+n1.closedEnd = false;
+n1.children = [newNode];
+newNode.closedEnd = true;
+newNode.closedBy = [newNode, negIdentityNode];
+newNode.used = true;
+this.nodes.push(newNode);
+return newNode;
+}
+SenTree.prototype.transferNodes = function() {
+//
+//
+this.addInitNodes();
+var branches = this.fvTree.closedBranches.concat(this.fvTree.openBranches);
+for (var b=0; b<branches.length; b++) {
+var par;
+for (var n=0; n<branches[b].nodes.length; n++) {
+var node = branches[b].nodes[n];
+if (node.isSenNode) {
+par = node.swappedWith || node;
+continue;
+}
+par = this.transferNode(node, par);
+}
+}
+for (var i=0; i<this.nodes.length; i++) {
+var node = this.nodes[i];
+if (node.used && node.formula.type == 'doublenegation') {
+var par = node;
+while (par.children[0] && par.children[0].expansionStep == par.expansionStep) {
+par = par.children[0];
+}
+this.expandDoubleNegation(node, par);
+}
+}
+for (var i=0; i<this.nodes.length; i++) {
+var node = this.nodes[i];
+if (!node.dneNode) {
+for (var j=0; j<node.fromNodes.length; j++) {
+var from = node.fromNodes[j];
+while (from.dneTo) from = from.dneTo;
+node.fromNodes[j] = from;
+}
+}
+}
+}
+SenTree.prototype.transferNode = function(node, par) {
+//
+//
+var nodeFormula = node.formula;
+for (var i=0; i<node.fromNodes.length; i++) {
+if (node.fromNodes[i].dneTo) {
+node.fromNodes[i] = node.fromNodes[i].dneTo;
+}
+}
+switch (node.fromRule) {
+case Prover.alpha : {
+var from = node.fromNodes[0];
+var fromFormula = from.formula;
+while (fromFormula.sub && fromFormula.sub.sub) fromFormula = fromFormula.sub.sub;
+var f1 = fromFormula.alpha(1);
+var f2 = fromFormula.alpha(2);
+if (from.biconditionalExpansion) {
+node.fromNodes = from.fromNodes;
+node.expansionStep = from.expansionStep;
+}
+if (!nodeFormula.equals(f1.nnf())) node.formula = f2;
+else if (!nodeFormula.equals(f2.nnf())) node.formula = f1;
+else {
+node.formula = (par.expansionStep == node.expansionStep && !par.biconditionalExpansion) ? f2 : f1;
+}
+this.appendChild(par, node);
+var lastNode = node;
+if (par.fromNodes[0] && par.fromNodes[0] == from && node.formula == f1) {
+this.reverse(par, node);
+lastNode = par;
+}
+return lastNode;
+}
+case Prover.beta: {
+var from = node.fromNodes[0];
+var fromFormula = from.formula;
+while (fromFormula.sub && fromFormula.sub.sub) fromFormula = fromFormula.sub.sub;
+var f1 = fromFormula.beta(1);
+var f2 = fromFormula.beta(2);
+if (!nodeFormula.equals(f1.nnf())) node.formula = f2;
+else if (!nodeFormula.equals(f2.nnf())) node.formula = f1;
+else {
+node.formula = (par.children && par.children.length) ? f2 : f1;
+}
+if (fromFormula.operator == '↔' ||
+(fromFormula.operator == '¬' && fromFormula.sub.operator == '↔')) {
+node.biconditionalExpansion = true;
+node.used = false;
+}
+this.appendChild(par, node);
+if (par.children.length == 2 && node.formula == f1) {
+par.children.reverse();
+}
+return node;
+}
+case Prover.gamma: case Prover.delta: {
+var from = node.fromNodes[0];
+var fromFormula = from.formula;
+while (fromFormula.sub && fromFormula.sub.sub) fromFormula = fromFormula.sub.sub;
+var matrix = fromFormula.matrix || fromFormula.sub.matrix;
+if (this.fvTree.prover.s5 && matrix.sub1 &&
+matrix.sub1.predicate == this.fvParser.R) {
+var newFla = fromFormula.sub ? matrix.sub2.negate() : matrix.sub2;
+}
+else {
+var newFla = fromFormula.sub ? matrix.negate() : matrix;
+}
+var boundVar = fromFormula.sub ? fromFormula.sub.variable : fromFormula.variable;
+if (node.instanceTerm) {
+node.formula = newFla.substitute(boundVar, node.instanceTerm);
+}
+else {
+node.formula = newFla;
+}
+this.appendChild(par, node);
+return node;
+}
+case Prover.modalGamma: {
+var from = node.fromNodes[0];
+var fromFormula = from.formula;
+while (fromFormula.sub && fromFormula.sub.sub) fromFormula = fromFormula.sub.sub;
+if (fromFormula.sub) {
+var newFla = fromFormula.sub.matrix.sub2.negate();
+var boundVar = fromFormula.sub.variable;
+}
+else {
+var newFla = fromFormula.matrix.sub2;
+var boundVar = fromFormula.variable;
+}
+node.formula = newFla.substitute(boundVar, node.instanceTerm);
+this.appendChild(par, node);
+return node;
+}
+case Prover.modalDelta: {
+var from = node.fromNodes[0];
+var fromFormula = from.formula;
+while (fromFormula.sub && fromFormula.sub.sub) fromFormula = fromFormula.sub.sub;
+if (node.formula.predicate == this.fvParser.R) {
+this.appendChild(par, node);
+}
+else {
+if (fromFormula.sub) {
+var newFla = fromFormula.sub.matrix.sub2.negate();
+var boundVar = fromFormula.sub.variable;
+}
+else {
+var newFla = fromFormula.matrix.sub2;
+var boundVar = fromFormula.variable;
+}
+node.formula = newFla.substitute(boundVar, node.instanceTerm);
+this.appendChild(par, node);
+}
+return node;
+}
+case Prover.equalityReasoner: {
+var from1 = node.fromNodes[0];
+var from2 = node.fromNodes[1];
+var identityFla = from1.formula;
+while (identityFla.sub) identityFla = identityFla.sub.sub;
+if (identityFla.terms.length == 3) {
+var identityWorld = identityFla.terms[identityFla.terms.length-1];
+var nodeAtom = node.formula.sub || node.formula;
+var nodeTerms = nodeAtom.terms;
+if (nodeAtom.predicate == '=' && nodeTerms.length == 2) {
+var from2Fla = from2.formula;
+while (from2Fla.sub) from2Fla = from2Fla.sub;
+nodeTerms.push(from2Fla.terms[from2Fla.terms.length-1]);
+}
+var nodeWorld = nodeTerms[nodeTerms.length-1];
+if (nodeWorld != identityWorld) {
+var newTerms = identityFla.terms.copy();
+newTerms[2] = nodeWorld;
+var newFormula = new AtomicFormula('=', newTerms);
+var newNode = new Node(newFormula, null, [from1]);
+this.makeNode(newNode);
+this.appendChild(par, newNode);
+newNode.used = true;
+par = newNode;
+node.fromNodes = [from2, newNode]
+}
+}
+this.appendChild(par, node);
+return node;
+}
+default: {
+this.appendChild(par, node);
+return node;
+}
+}
+}
+SenTree.prototype.addInitNodes = function() {
+var branch = this.fvTree.closedBranches.length > 0 ?
+this.fvTree.closedBranches[0] : this.fvTree.openBranches[0];
+for (var i=0; i<this.initFormulasNonModal.length; i++) {
+var node = this.makeNode(branch.nodes[i]);
+node.formula = this.initFormulasNonModal[i];
+node.used = true;
+if (i==0) this.nodes.push(node);
+else this.appendChild(this.nodes[i-1], node);
+}
+}
+SenTree.prototype.expandDoubleNegation = function(node, parent) {
+var newNode = new Node(node.formula.sub.sub, null, [node]);
+this.makeNode(newNode);
+newNode.parent = parent;
+newNode.children = parent.children;
+parent.children = [newNode];
+for (var i=0; i<newNode.children.length; i++) {
+newNode.children[i].parent = newNode;
+}
+if (parent.closedEnd) {
+parent.closedEnd = false;
+newNode.closedEnd = true;
+}
+newNode.used = node.used;
+newNode.dneNode = true;
+node.dneTo = newNode;
+this.nodes.push(newNode);
+}
+SenTree.prototype.replaceFreeVariablesAndSkolemTerms = function() {
+var substitutions = [];
+for (var n=0; n<this.nodes.length; n++) {
+var node = this.nodes[n];
+for (var i=0; i<substitutions.length; i++) {
+var term = substitutions[i][0], repl = substitutions[i][1];
+node.formula = node.formula.substitute(term, repl);
+}
+var skterms = getSkolemTerms(node.formula);
+var term;
+while ((term = skterms.shift())) {
+var termLetter = term.isArray ? term[0] : term;
+var isWorldTerm = (termLetter[0] == 'ω');
+var repl = isWorldTerm ?
+this.parser.getNewWorldName(true) : this.parser.getNewConstant();
+substitutions.push([term, repl]);
+node.formula = node.formula.substitute(term, repl);
+skterms = Formula.substituteInTerms(skterms, term, repl);
+}
+var varMatches = node.formula.string.match(/[ξζ]\d+/g);
+if (varMatches) {
+for (var j=0; j<varMatches.length; j++) {
+var fv = varMatches[j];
+if (fv[0] == 'ζ') {
+var repl = this.parser.w;
+}
+else {
+var repl = this.parser.getSymbols('individual constant')[0] ||
+this.parser.getNewConstant();
+}
+substitutions.push([fv, repl]);
+node.formula = node.formula.substitute(fv, repl);
+}
+}
+}
+function getSkolemTerms(formula) {
+var skterms = {};
+var flas = [formula];
+var fla;
+while ((fla = flas.shift())) {
+if (fla.isArray) {
+for (var i=0; i<fla.length; i++) {
+if (fla[i].isArray) {
+if (fla[i][0][0].match(/[φω]/)) {
+skterms[fla[i].toString()] = fla[i];
+}
+else {
+flas.unshift(fla[i]);
+}
+}
+else if (fla[i][0].match(/[φω]/)) {
+skterms[fla[i].toString()] = fla[i];
+}
+}
+}
+else if (fla.sub) {
+flas.unshift(fla.sub);
+}
+else if (fla.sub1) {
+flas.unshift(fla.sub1);
+flas.unshift(fla.sub2);
+}
+else if (fla.matrix) {
+flas.unshift(fla.matrix);
+}
+else {
+flas.unshift(fla.terms);
+}
+}
+return Object.values(skterms);
+}
+}
+SenTree.prototype.removeUnusedNodes = function() {
+if (!this.isClosed) return;
+for (var i=0; i<this.nodes.length; i++) {
+var node = this.nodes[i];
+if (node.used) {
+var expansion = this.getExpansion(node);
+for (var j=0; j<expansion.length; j++) {
+if (!expansion[j].biconditionalExpansion) {
+expansion[j].used = true;
+}
+}
+}
+}
+for (var i=0; i<this.nodes.length; i++) {
+if (!this.nodes[i].used) {
+var ok = this.remove(this.nodes[i]);
+if (ok) i--;
+}
+}
+}
+SenTree.prototype.modalize = function() {
+for (var i=0; i<this.nodes.length; i++) {
+var node = this.nodes[i];
+node.formula = this.fvParser.translateToModal(node.formula);
+if (node.formula.predicate == this.fvParser.R) {
+node.formula.string = node.formula.terms[0] + this.fvParser.R
++ node.formula.terms[1];
+}
+}
+}
+SenTree.prototype.makeNode = function(node) {
+node.parent = null;
+node.children = [];
+node.isSenNode = true;
+return node;
+}
+SenTree.prototype.appendChild = function(oldNode, newNode) {
+if (!newNode.isSenNode) {
+newNode = this.makeNode(newNode);
+}
+newNode.parent = oldNode;
+oldNode.children.push(newNode);
+if (oldNode.closedEnd) {
+oldNode.closedEnd = false;
+newNode.closedEnd = true;
+}
+this.nodes.push(newNode);
+return newNode;
+}
+SenTree.prototype.remove = function(node) {
+if (node.isRemoved) return;
+if (node.parent.children.length == 1) {
+node.parent.children = node.children;
+if (node.children[0]) {
+node.children[0].parent = node.parent;
+node.children[0].instanceTerm = node.instanceTerm;
+}
+if (node.children[1]) {
+node.children[1].parent = node.parent;
+node.children[1].instanceTerm = node.instanceTerm;
+}
+}
+else {
+if (node.children.length > 1) {
+return false;
+}
+var i = (node == node.parent.children[0]) ? 0 : 1;
+if (node.children[0]) {
+node.parent.children[i] = node.children[0];
+node.children[0].parent = node.parent;
+node.children[0].instanceTerm = node.instanceTerm;
+}
+else node.parent.children.remove(node);
+}
+this.nodes.remove(node);
+node.isRemoved = true;
+return true;
+}
+SenTree.prototype.toString = function() {
+return "<table><tr><td align='center' style='font-family:monospace'>"+getTree(this.nodes[0])+"</td</tr></table>";
+function getTree(node) {
+var recursionDepth = arguments[1] || 0;
+if (++recursionDepth > 40) return "<b>...<br>[max recursion]</b>";
+var res = (node.used ? '.' : '') + node
++ (node.formula.world ? ' ('+node.formula.world+')' : '')
++ (node.closedEnd ? "<br>x<br>" : "<br>");
+if (node.children[1]) {
+var tdStyle = "font-family:monospace; border-top:1px solid #999; padding:3px; border-right:1px solid #999";
+var td = "<td align='center' valign='top' style='" + tdStyle + "'>";
+res += "<table><tr>"+ td + getTree(node.children[0], recursionDepth) +"</td>\n"
++ td + getTree(node.children[1], recursionDepth) + "</td>\n"
++ "</tr></table>";
+}
+else if (node.children[0]) {
+res += getTree(node.children[0], recursionDepth);
+}
+return res;
+}
+}
+SenTree.prototype.substitute = function(oldTerm, newTerm) {
+for (var i=0; i<this.nodes.length; i++) {
+this.nodes[i].formula = this.nodes[i].formula.substitute(oldTerm, newTerm);
+}
+}
+SenTree.prototype.reverse = function(node1, node2) {
+node2.parent = node1.parent;
+node1.parent = node2;
+if (node2.parent.children[0] == node1) node2.parent.children[0] = node2;
+else node2.parent.children[1] = node2;
+node1.children = node2.children;
+node2.children = [node1];
+if (node1.children[0]) node1.children[0].parent = node1;
+if (node1.children[1]) node1.children[1].parent = node1;
+if (node2.closedEnd) {
+node2.closedEnd = false;
+node1.closedEnd = true;
+}
+node2.swappedWith = node1;
+node1.swappedWith = node2;
+}
+SenTree.prototype.getExpansion = function(node) {
+var res = [node];
+if (!node.expansionStep) return res;
+var par = node.parent;
+while (par && par.expansionStep == node.expansionStep) {
+res.unshift(par);
+par = par.parent;
+}
+var ch = node.children[0];
+while (ch && ch.expansionStep == node.expansionStep) {
+res.push(ch);
+ch = ch.children[0];
+}
+if (par) {
+for (var i=0; i<par.children.length; i++) {
+var sib = par.children[i];
+while (sib && sib.expansionStep == node.expansionStep) {
+if (!res.includes(sib)) res.push(sib);
+sib = sib.children[0];
+}
+}
+}
+return res;
+}
+SenTree.prototype.getCounterModel = function() {
+var endNode = null;
+for (var i=0; i<this.nodes.length; i++) {
+if (this.nodes[i].children.length || this.nodes[i].closedEnd) continue;
+endNode = this.nodes[i];
+break;
+}
+if (!endNode) return null;
+var model = new Model(this.fvTree.prover.modelfinder, 0, 0);
+var node = endNode;
+if (this.parser.isModal) {
+model.worlds = [0];
+model.interpretation['w'] = 0;
+}
+do {
+var fla = node.formula;
+while (fla.operator == '¬' && fla.sub.operator == '¬') {
+fla = fla.sub.sub;
+}
+var atom = (fla.operator == '¬') ? fla.sub : fla;
+if (!atom.predicate) continue;
+var terms = atom.terms.copy();
+for (var t=0; t<terms.length; t++) {
+if (terms[t].isArray) {
+for (var i=1; i<terms[t].length; i++) {
+terms.push(terms[t][i]);
+}
+}
+}
+terms.sort(function(a,b) {
+return a.toString().length - b.toString().length;
+});
+for (var t=0; t<terms.length; t++) {
+var term = terms[t];
+var rterm = model.reduceArguments(terms[t]).toString();
+if (rterm in model.interpretation) continue;
+var domain = this.fvParser.expressionType[term] &&
+this.fvParser.expressionType[term].indexOf('world') > -1 ?
+model.worlds : model.domain;
+domain.push(domain.length);
+model.interpretation[rterm] = domain.length-1;
+}
+if (!model.satisfy(fla)) {
+return null;
+}
+} while ((node = node.parent));
+if (model.domain.length == 0) {
+model.domain = [0];
+}
+return model;
+}
+function TreePainter(senTree, rootAnchor) {
+this.paintInterval = 200;
+this.branchPadding = window.innerWidth < 500 ? 0 :
+window.innerWidth < 800 ? 20 : 30;
+this.branchingHeight = 40;
+this.tree = senTree;
+this.isModal = senTree.parser.isModal;
+this.rootAnchor = rootAnchor;
+this.rootAnchor.innerHTML = "";
+rootAnchor.style.transform = "scale(1)";
+this.minX = this.branchPadding/2 - rootAnchor.offsetLeft;
+this.scale = 1;
+this.curNodeNumber = 0;
+this.highlighted = [];
+}
+TreePainter.prototype.paintTree = function() {
+var node = this.getNextUnpaintedNode();
+if (!node) {
+this.highlightNothing();
+return this.finished();
+}
+var paintNodes = this.tree.getExpansion(node);
+for (var i=0; i<paintNodes.length; i++) {
+this.paint(paintNodes[i]);
+if (paintNodes[i].closedEnd) {
+this.paint(this.makeCloseMarkerNode(paintNodes[i]));
+}
+}
+this.highlight(paintNodes, node.fromNodes);
+this.paintTimer = setTimeout(function(){
+this.paintTree();
+}.bind(this), this.paintInterval);
+}
+TreePainter.prototype.stop = function() {
+clearTimeout(this.paintTimer);
+}
+TreePainter.prototype.finished = function() {
+}
+TreePainter.prototype.paint = function(node) {
+if (!node.parent || node.parent.children.length == 2) {
+node.container = this.makeContainer(node);
+}
+else {
+node.container = node.parent.container;
+}
+node.div = this.makeNodeDiv(node);
+node.container.appendChild(node.div);
+node.div.style.top = node.container.h + "px";
+node.container.h += node.div.offsetHeight + 3;
+if (node.isCloseMarkerNode) {
+node.container.h += this.branchPadding;
+}
+if (node.formulaSpan.offsetWidth > node.container.formulaWidth) {
+node.container.formulaWidth = node.formulaSpan.offsetWidth + 10;
+var n = node;
+do {
+n.formulaSpan.style.width = node.container.formulaWidth + "px";
+n.div.style.left = -node.div.offsetWidth/2 + "px";
+n = n.parent;
+} while (n && n.container == node.container);
+}
+else {
+node.formulaSpan.style.width = node.container.formulaWidth + "px";
+node.div.style.left = -node.container.w/2 + "px";
+}
+node.container.w = Math.max(node.container.w, node.div.offsetWidth);
+var fromSpan = node.div.childNodes[2];
+var wOversize = fromSpan.scrollWidth - fromSpan.offsetWidth;
+node.container.wOversize = Math.max(node.container.wOversize, wOversize);
+this.repositionBranches(node);
+this.keepTreeInView();
+}
+TreePainter.prototype.makeContainer = function(node, nodeId) {
+var parContainer = node.parent ? node.parent.container : this.rootAnchor;
+var container = document.createElement('div');
+parContainer.appendChild(container);
+if (node.parent) parContainer.subContainers.push(container);
+container.subContainers = [];
+container.style.width = "100%";
+container.style.position = "absolute";
+container.style.left = "0px";
+container.style.top = node.parent ? parContainer.h + this.branchingHeight + "px" : "0px";
+container.w = container.h = 0;
+container.wOversize = 0;
+container.str = "{ " + (this.curNodeNumber+1) + " "+node+ " }";
+container.formulaClass = 'fla'+this.curNodeNumber;
+container.formulaWidth = 0;
+return container;
+}
+TreePainter.prototype.makeNodeDiv = function(node) {
+var div = document.createElement('div');
+div.className = 'treeNode';
+var nodeNumberSpan = document.createElement('span');
+nodeNumberSpan.className = 'nodenumber';
+if (!node.isCloseMarkerNode) {
+node.nodeNumber = ++this.curNodeNumber;
+nodeNumberSpan.innerHTML = node.nodeNumber+'.';
+}
+div.appendChild(nodeNumberSpan);
+div.id = 'n'+this.curNodeNumber;
+node.formulaSpan = document.createElement('span');
+node.formulaSpan.className = 'formula '+node.container.formulaClass;
+node.formulaSpan.innerHTML = node.formula.toString();
+div.appendChild(node.formulaSpan);
+if (this.isModal) {
+var worldSpan = document.createElement('span');
+worldSpan.className = 'worldlabel';
+worldSpan.innerHTML = node.formula.world ? '('+node.formula.world+')' : '';
+div.appendChild(worldSpan);
+}
+var fromSpan = document.createElement('span');
+fromSpan.className = 'fromnumbers';
+var annot = node.fromNodes.map(function(n) { return n.nodeNumber; });
+if (node.fromRule) {
+var fromRule = node.fromRule.toString().substr(0,2);
+if (!['al', 'be', 'ga', 'de', 'mo'].includes(fromRule)) {
+fromRule += '.';
+if (fromRule == 'eq.') fromRule = 'LL';
+annot.push(fromRule);
+}
+}
+fromSpan.innerHTML = annot.length>0 ? "("+annot.join(',')+")" : " ";
+div.appendChild(fromSpan);
+var painter = this;
+if (node.isCloseMarkerNode) {
+div.addEventListener("mouseenter", function(e) {
+painter.highlight([], node.closedBy);
+});
+}
+else {
+div.addEventListener("mouseenter", function(e) {
+painter.highlight(painter.tree.getExpansion(node), node.fromNodes);
+});
+}
+div.addEventListener("mouseleave", function(e) {
+painter.highlightNothing();
+});
+return div;
+}
+TreePainter.prototype.makeCloseMarkerNode = function(closingNode) {
+var node = new Node();
+node.formula = "<b>x</b>";
+node.parent = closingNode;
+node.fromNodes = [];
+node.children = [];
+node.isCloseMarkerNode = true;
+node.closedBy = closingNode.closedBy;
+return node;
+}
+TreePainter.prototype.repositionBranches = function(node) {
+var par = node.container;
+while ((par = par.parentNode).subContainers) {
+if (!par.subContainers[1]) continue;
+var overlap = this.getOverlap(par);
+//log("comparing subcontainers for overlap: " + par.str);
+if (overlap) {
+var x1 = parseInt(par.subContainers[0].style.left) - Math.ceil(overlap/2);
+var x2 = parseInt(par.subContainers[1].style.left) + Math.ceil(overlap/2);
+par.subContainers[0].style.left = x1 + "px";
+par.subContainers[1].style.left = x2 + "px";
+if (par.branchLines) {
+for (var i=0; i<par.branchLines.length; i++) {
+par.removeChild(par.branchLines[i]);
+}
+}
+var centre = this.isModal ? -8 : 0;
+var line1 = this.drawLine(par, centre, par.h, x1+centre, par.h + this.branchingHeight-2);
+var line2 = this.drawLine(par, centre, par.h, x2+centre, par.h + this.branchingHeight-2);
+par.branchLines = [line1, line2];
+}
+}
+}
+TreePainter.prototype.getOverlap = function(par) {
+var overlap = 0;
+var co1, co2, co1s = [par.subContainers[0]], co2s;
+par.__x = 0; par.__y = 0;
+while ((co1 = co1s.shift())) {
+co2s = [par.subContainers[1]];
+while ((co2 = co2s.shift())) {
+co1.__x = co1.parentNode.__x + parseInt(co1.style.left);
+co1.__y = co1.parentNode.__y + parseInt(co1.style.top);
+co2.__x = co2.parentNode.__x + parseInt(co2.style.left);
+co2.__y = co2.parentNode.__y + parseInt(co2.style.top);
+if ((co1.__y >= co2.__y) && (co1.__y < co2.__y + co2.h) ||
+(co2.__y >= co1.__y) && (co2.__y < co1.__y + co1.h)) {
+var co1w = co1.w + co1.wOversize;
+var co2w = co2.w + co2.wOversize;
+var overlap12 = (co1.__x + co1w/2 + painter.branchPadding) - (co2.__x - co2w/2);
+overlap = Math.max(overlap, overlap12);
+}
+co2s = co2s.concat(co2.subContainers);
+}
+co1s = co1s.concat(co1.subContainers);
+}
+return Math.floor(overlap);
+}
+TreePainter.prototype.keepTreeInView = function() {
+var mainContainer = this.rootAnchor.firstChild;
+if (mainContainer.getBoundingClientRect) {
+var midPoint = Math.round(mainContainer.getBoundingClientRect()['left']);
+var winTreeRatio = window.innerWidth*1.0/(midPoint*2);
+if (winTreeRatio < 1) {
+this.scale = Math.max(winTreeRatio, 0.8);
+rootAnchor.style.transform="scale("+this.scale+")";
+}
+}
+var minX = this.getMinX();
+if (minX < this.minX/this.scale) {
+var invisibleWidth = (this.minX/this.scale - minX);
+mainContainer.style.left = mainContainer.__x + invisibleWidth + "px";
+}
+}
+TreePainter.prototype.getMinX = function() {
+var minX = 0;
+var con, cons = [this.rootAnchor.firstChild];
+while ((con = cons.shift())) {
+con.__x = (con.parentNode.__x || 0) + parseInt(con.style.left);
+if (con.__x - con.w/2 < minX) {
+minX = con.__x - con.w/2;
+}
+cons = cons.concat(con.subContainers);
+}
+return minX;
+}
+TreePainter.prototype.highlight = function(children, fromNodes) {
+while (this.highlighted.length) {
+this.highlighted.shift().div.childNodes[1].style.backgroundColor = 'unset';
+}
+for (var i=0; i<children.length; i++) {
+children[i].div.childNodes[1].style.backgroundColor = '#00708333';
+}
+for (var i=0; i<fromNodes.length; i++) {
+fromNodes[i].div.childNodes[1].style.backgroundColor = '#00708366';
+}
+this.highlighted = children.concat(fromNodes);
+}
+TreePainter.prototype.highlightNothing = function() {
+this.highlight([], []);
+}
+TreePainter.prototype.drawLine = function(el, x1, y1, x2, y2) {
+var a = x1 - x2;
+var b = y1 - y2;
+var length = Math.sqrt(a*a + b*b);
+var sx = (x1 + x2) / 2
+var x = sx - length / 2;
+var y = (y1 + y2) / 2;
+var angle = Math.PI - Math.atan2(-b, a);
+var line = document.createElement("div");
+var styles = 'border: 1px solid #678; '
++ 'width: ' + length + 'px; '
++ 'height: 0px; '
++ '-moz-transform: rotate(' + angle + 'rad); '
++ '-webkit-transform: rotate(' + angle + 'rad); '
++ '-o-transform: rotate(' + angle + 'rad); '
++ '-ms-transform: rotate(' + angle + 'rad); '
++ 'position: absolute; '
++ 'top: ' + y + 'px; '
++ 'left: ' + x + 'px; ';
+line.setAttribute('style', styles);
+el.appendChild(line);
+return line;
+}
+TreePainter.prototype.getNextUnpaintedNode = function() {
+var nodes = [this.tree.nodes[0]];
+var node;
+while ((node = nodes.shift())) {
+do {
+if (!node.div) return node;
+if (node.children.length == 2) nodes.unshift(node.children[1]);
+} while ((node = node.children[0]));
+}
+return null;
+}
+var flaFieldValue = '';
+function updateInput() {
+var ostr = document.forms[0].flaField.value;
+if (ostr == flaFieldValue) {
+return true;
+}
+cposition = this.selectionStart;
+flaFieldValue = renderSymbols(ostr);
+var diff = ostr.length - flaFieldValue.length
+document.forms[0].flaField.value = flaFieldValue;
+this.selectionEnd = cposition - diff;
+toggleAccessibilityRow();
+}
+function renderSymbols(str) {
+str = str.replace(/&|\^| and/ig, '∧');
+str = str.replace(/ v | or/ig, ' ∨ ');
+str = str.replace(/~|∼| not/ig, '¬');
+str = str.replace(/<->|<=>|⇔|≡| iff/ig, '↔');
+str = str.replace(/->|=>|⇒|⊃| then/g, '→');
+str = str.replace(/\[\]/g, '□');
+str = str.replace(/<>|◊|♢/g, '◇');
+str = str.replace(/!|Ɐ/g, '∀');
+str = str.replace(/\?/g, '∃');
+str = str.replace(/\(A([s-z])\)/g, '∀$1');
+str = str.replace(/\(E([s-z])\)/g, '∃$1');
+str = str.replace(/(?:^|\W)\(([s-z])\)/g, '∀$1');
+str = str.replace(/\\?forall[\{ ]?\}?/g, '∀');
+str = str.replace(/\\?exists[\{ ]?\}?/g, '∃');
+str = str.replace(/(\\neg|\\lnot)[\{ ]?\}?/g, '¬');
+str = str.replace(/(\\vee|\\lor)[\{ ]?\}?/g, '∨');
+str = str.replace(/(\\wedge|\\land)[\{ ]?\}?/g, '∧');
+str = str.replace(/(\\to|\\rightarrow)[\{ ]?\}?/g, '→');
+str = str.replace(/\\leftrightarrow[\{ ]?\}?/g, '↔');
+str = str.replace(/\\[Bb]ox[\{ ]?\}?/g, '□');
+str = str.replace(/\\[Dd]iamond[\{ ]?\}?/g, '◇');
+str = str.replace(/\\models|\\vdash/g, '|=');
+return str;
+}
+function toggleAccessibilityRow() {
+if (/[□◇]/.test(document.forms[0].flaField.value)) {
+document.getElementById('accessibilitySpan').style.display = 'inline-block';
+}
+else {
+document.getElementById('accessibilitySpan').style.display = 'none';
+}
+}
+function updateAccCheckboxes() {
+var checkboxes = document.querySelectorAll('.accCheckbox');
+var intent = {};
+checkboxes.forEach(function(el) {
+if (!el.disabled) el.dataset.intent = el.checked ? '1' : '';
+intent[el.id] = el.dataset.intent === '1';
+});
+var u = intent.universality, r = intent.reflexivity, s = intent.symmetry,
+t = intent.transitivity, e = intent.euclidity;
+var implied = {
+universality: false,
+reflexivity:  u,
+symmetry:     u || (r && e),
+transitivity: u || (e && (s || r)),
+euclidity:    u || (s && t),
+seriality:    u || r
+};
+checkboxes.forEach(function(el) {
+el.disabled = implied[el.id];
+el.checked = implied[el.id] || intent[el.id];
+});
+}
+function prepareUI() {
+document.forms[0].flaField.insertAtCaret = function(str) {
+if (document.selection) {
+this.focus();
+sel = document.selection.createRange();
+sel.text = str;
+this.focus();
+}
+else if (this.selectionStart || this.selectionStart === 0) {
+var startPos = this.selectionStart;
+var endPos = this.selectionEnd;
+var scrollTop = this.scrollTop;
+var val = this.value;
+this.value = val.substring(0, startPos)+str+val.substring(endPos,val.length);
+this.focus();
+this.selectionStart = startPos + str.length;
+this.selectionEnd = startPos + str.length;
+this.scrollTop = scrollTop;
+}
+else {
+this.value += str;
+this.focus();
+}
+}
+document.querySelectorAll('.symbutton').forEach(function(el) {
+el.onclick = function(e) {
+var field = document.forms[0].flaField;
+var command = this.innerHTML;
+field.insertAtCaret(command);
+toggleAccessibilityRow();
+}
+});
+document.getElementById("statusbtn").onclick = function(e) {
+var btn = document.getElementById("statusbtn");
+if (btn.innerText == 'stop') {
+btn.innerText = 'continue';
+prover.stop();
+}
+else {
+btn.innerText = 'stop';
+prover.start();
+}
+}
+document.querySelectorAll('.accCheckbox').forEach(function(el) {
+el.onchange = updateAccCheckboxes;
+});
+}
+var prover = null;
+function startProof() {
+var input = document.forms[0].flaField.value;
+var parser = new Parser();
+try {
+var parsedInput = parser.parseInput(input);
+}
+catch (e) {
+if (input.indexOf('v') > -1) {
+e += "\nIf you mean disjunction by the letter 'v', put a space on either side.";
+}
+alert(e);
+return false;
+}
+var premises = parsedInput[0];
+var conclusion = parsedInput[1];
+var initFormulas = premises.concat([conclusion.negate()]);
+document.getElementById("intro").style.display = "none";
+document.getElementById("model").style.display = "none";
+document.getElementById("rootAnchor").style.display = "none";
+document.getElementById("backtostartpage").style.display = "block";
+document.getElementById("status").style.display = "block";
+document.getElementById("statusmsg").innerHTML = "something went wrong: please email wo@umsu.de and tell me what you did";
+document.getElementById("statusbtn").style.display = "block";
+document.getElementById("statusbtn").innerHTML = "stop";
+var accessibilityConstraints = [];
+if (parser.isModal) {
+document.querySelectorAll('.accCheckbox').forEach(function(el) {
+if (el.dataset.intent === '1') {
+accessibilityConstraints.push(el.id);
+}
+});
+}
+prover = new Prover(initFormulas, parser, accessibilityConstraints);
+prover.onfinished = function(treeClosed) {
+var conclusionSpan = "<span class='formula'>"+conclusion+"</span>";
+if (initFormulas.length == 1) {
+var summary = conclusionSpan + " is " + (treeClosed ? "valid." : "invalid.");
+}
+else {
+var summary = premises.map(function(f){
+return "<span class='formula'>"+f+"</span>";
+}).join(', ') + (treeClosed ? " entails " : " does not entail ") + conclusionSpan + ".";
+}
+document.getElementById("statusmsg").innerHTML = summary;
+document.getElementById("statusbtn").style.display = "none";
+var sentree = new SenTree(this.tree, parser);
+if (!treeClosed) {
+if (this.counterModel) {
+document.getElementById("model").style.display = "block";
+document.getElementById("model").innerHTML = "<b>Countermodel:</b><br>" +
+this.counterModel.toHTML();
+}
+return;
+}
+document.getElementById("rootAnchor").style.display = "block";
+self.painter = new TreePainter(sentree, document.getElementById("rootAnchor"));
+self.painter.finished = function() { addExportButtons(); }
+self.painter.paintTree();
+}
+prover.status = function(txt) {
+document.getElementById("statusmsg").innerHTML = txt;
+}
+setTimeout(function(){
+prover.start();
+}, 1);
+return false;
+}
+onload = function(e) {
+updateInput();
+prepareUI();
+document.forms[0].flaField.onkeyup = updateInput;
+document.forms[0].onsubmit = function(e) {
+setTimeout(function() {
+setHash();
+startProof();
+}, 1);
+return false;
+}
+if (location.search.startsWith('?f=')) {
+location.hash = location.search.substring(3);
+hashChange();
+}
+else if (location.hash.length > 0) {
+hashChange();
+}
+document.forms[0].flaField.focus();
+}
+var hashSetByScript = false;
+function setHash() {
+hashSetByScript = true;
+var hash = encodeInputToHash(document.forms[0].flaField.value);
+if (document.getElementById('accessibilitySpan').style.display != 'none') {
+var flags = '';
+document.querySelectorAll('.accCheckbox').forEach(function(el) {
+if (el.dataset.intent === '1' && !el.disabled) flags += el.value;
+});
+if (flags) hash += '.' + flags;
+}
+location.hash = hash;
+}
+window.onhashchange = hashChange;
+function hashChange() {
+if (hashSetByScript) {
+hashSetByScript = false;
+return;
+}
+if (prover) prover.stop();
+if (location.hash.length == 0) {
+document.getElementById("intro").style.display = "block";
+document.getElementById("model").style.display = "none";
+document.getElementById("rootAnchor").style.display = "none";
+document.getElementById("backtostartpage").style.display = "none";
+document.getElementById("status").style.display = "none";
+}
+else {
+var hash = location.hash.substring(1);
+var flagStr = '';
+var checkboxes = document.querySelectorAll('.accCheckbox');
+if (hash.indexOf('|') > -1 || hash.indexOf('%7C') > -1) {
+hash = hash.replace(/%7C/g, '|');
+var hashparts = hash.split('||');
+document.forms[0].flaField.value = decodeHashToInput(hashparts[0]);
+var names = hashparts[1] ? hashparts[1].split('|') : [];
+checkboxes.forEach(function(el) {
+if (names.includes(el.id)) flagStr += el.value;
+});
+}
+else {
+var flagChars = Array.from(checkboxes).map(function(el) { return el.value; }).join('');
+var m = hash.match(new RegExp('^(.*)\\.([' + flagChars + ']+)$'));
+document.forms[0].flaField.value = decodeHashToInput(m ? m[1] : hash);
+if (m) flagStr = m[2];
+}
+checkboxes.forEach(function(el) {
+el.checked = flagStr.includes(el.value);
+});
+updateAccCheckboxes();
+toggleAccessibilityRow();
+startProof();
+}
+}
+var hashSymbols = ' ∧∨¬↔→∀∃□◇|';
+function encodeInputToHash(input) {
+var inputNoSpaces = input.replace(/\s/g, '');
+return inputNoSpaces.replace(new RegExp('['+hashSymbols+']', 'g'), function(m) {
+return '~' + hashSymbols.indexOf(m).toString(36);
+});
+}
+function decodeHashToInput(hash) {
+if (hash.indexOf('%') > -1) {
+hash = decodeURIComponent(hash.replace(/\+/g, '%20'));
+}
+return hash.replace(/~./g, function(m) {
+return hashSymbols[parseInt(m[1], 36)];
+});
+}
+function addExportButtons() {
+var el = document.createElement('div');
+el.id = 'exportDiv';
+el.style.position = 'absolute';
+var treeCoords = getTreeCoords();
+el.style.top = (treeCoords.bottom-treeCoords.top)/painter.scale + 'px';
+var width = (treeCoords.right-treeCoords.left)/painter.scale;
+el.style.width = width+'px';
+el.style.left = Math.round(width/-2) +'px'
+el.innerHTML = '<button onclick="exportImage()">save as png</button>';
+painter.rootAnchor.firstChild.appendChild(el);
+}
+function getTreeCoords() {
+rootCoords = document.getElementById('rootAnchor').getBoundingClientRect();
+var treeCoords = {
+left: rootCoords.left,
+right: rootCoords.right,
+top: rootCoords.top,
+bottom: rootCoords.bottom
+};
+document.querySelectorAll('.treeNode').forEach(function(el) {
+var coords = el.getBoundingClientRect();
+if (coords.left < treeCoords.left) treeCoords.left = Math.round(coords.left);
+if (coords.right > treeCoords.right) treeCoords.right = Math.round(coords.right);
+if (coords.bottom > treeCoords.bottom) treeCoords.bottom = Math.round(coords.bottom);
+});
+return treeCoords;
+}
+function getTreeHTML() {
+var root = document.getElementById('rootAnchor');
+defaultStyles = {
+'DIV' : getDefaultStyle('div'),
+'SPAN' : getDefaultStyle('span')
+}
+document.querySelectorAll('#rootAnchor *').forEach(function(el) {
+var computedStyle = window.getComputedStyle(el);
+var defaultStyle = defaultStyles[el.tagName];
+if (!defaultStyle) return;
+for (var i=0; i<computedStyle.length; i++) {
+var cssProperty = computedStyle[i];
+var cssValue = computedStyle.getPropertyValue(cssProperty);
+if (defaultStyle[cssProperty] != computedStyle[cssProperty]) {
+el.style[cssProperty] = cssValue;
+}
+}
+});
+document.getElementById('exportDiv').style.display = 'none';
+var html = root.outerHTML;
+document.getElementById('exportDiv').style.display = 'block';
+var treeCoords = getTreeCoords();
+var width = treeCoords.right - treeCoords.left;
+html = html.replace(/id="rootAnchor".+?>/, 'id="rootAnchor" style="position:relative; left:'+(width/2)+'px;">');
+return html;
+}
+function getDefaultStyle(tagName) {
+var defaultStyle = {};
+var element = document.body.appendChild(document.createElement(tagName));
+var computedStyle = window.getComputedStyle(element);
+for (var i=0; i < computedStyle.length; i++) {
+defaultStyle[computedStyle[i]] = computedStyle[computedStyle[i]];
+}
+document.body.removeChild(element);
+return defaultStyle;
+}
+function exportImage() {
+if (!document.getElementById('localfontstyle')) {
+document.getElementsByTagName("head")[0].insertAdjacentHTML(
+"beforeend",
+'<link rel="stylesheet" id="localfontstyle" href="font.css" onload="exportImage()" type="text/css" />');
+return;
+}
+var canvas = document.createElement('canvas');
+var ctx = canvas.getContext('2d');
+var treeCoords = getTreeCoords();
+width = treeCoords.right - treeCoords.left;
+height = treeCoords.bottom - treeCoords.top;
+canvas.width = width;
+canvas.height = height;
+var tempImg = document.createElement('img');
+tempImg.addEventListener('load', function(el) {
+ctx.drawImage(el.target, 0, 0);
+var dataURL = canvas.toDataURL('image/png');
+var downloadLink = document.createElement('a');
+downloadLink.setAttribute('download', 'proof.png');
+var url = dataURL.replace(/^data:image\/png/, 'data:application/octet-stream');
+downloadLink.setAttribute('href', url);
+downloadLink.click();
+document.body.removeChild(downloadLink);
+});
+tempImg.addEventListener('error', function(el) {
+alert("sorry, this doesn't seem to work in your browser");
+});
+var html = getTreeHTML();
+html = html.replace(/<br>/g, '<br/>');
+var style = '';
+var cssRules = document.styleSheets[2].cssRules;
+for (var i=0; i<cssRules.length; i++) {
+style += cssRules[i].cssText;
+}
+xml = '<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'">'
+xml += '<defs><style>' + style + '</style></defs>';
+xml += '<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">'+html+'</div></foreignObject>';
+xml += '</svg>'
+tempImg.src = 'data:image/svg+xml,' + encodeURIComponent(xml);
+}
