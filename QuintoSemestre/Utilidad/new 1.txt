@@ -1,0 +1,77 @@
+% --- EXPORTACIÓN A HTML PWA ---
+
+exportar_html :-
+    writeln('--- EXPORTANDO PWA ---'),
+    findall(tarea(ID, N, D, E, F, M, Est), tarea(ID, N, D, E, F, M, pendiente), Tareas),
+    ordenar_tareas(Tareas, TareasOrdenadas),
+    get_time(StampActual),
+    stamp_date_time(StampActual, DateTime, 'local'),
+    date_time_value(date, DateTime, date(Y, Mo, Da)),
+    Hoy is (Y * 10000) + (Mo * 100) + Da,
+    planificar(TareasOrdenadas, Hoy, 480, Agenda, Advertencias),
+    
+    tell('manifest.json'), escribir_manifest, told,
+    tell('sw.js'), escribir_sw, told,
+    tell('horario.html'),
+    escribir_cabecera_html,
+    escribir_agenda_html(Agenda, 0),
+    escribir_advertencias_html(Advertencias),
+    escribir_pie_html,
+    told,
+    writeln('¡Exito! Archivos PWA (HTML, Manifest y SW) generados.').
+
+escribir_manifest :-
+    writeln('{'),
+    writeln('  "name": "Mi Horario",'),
+    writeln('  "short_name": "Horario",'),
+    writeln('  "start_url": "/horario.html",'),
+    writeln('  "display": "standalone",'),
+    writeln('  "background_color": "#f0f2f5",'),
+    writeln('  "theme_color": "#1a73e8",'),
+    writeln('  "icons": [ {'),
+    writeln('    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzFhNzNlOCIgcng9IjIwIi8+PHRleHQgeT0iNzAiIHg9IjE1IiBmb250LXNpemU9IjcwIiBmaWxsPSJ3aGl0ZSI+8J+TjDwvdGV4dD48L3N2Zz4=",'),
+    writeln('    "sizes": "192x192",'),
+    writeln('    "type": "image/svg+xml"'),
+    writeln('  } ]'),
+    writeln('}').
+
+escribir_sw :-
+    writeln('self.addEventListener("install", (e) => {'),
+    writeln('  e.waitUntil(caches.open("horario-v1").then((c) => c.addAll(["/horario.html", "/manifest.json"])));'),
+    writeln('});'),
+    writeln('self.addEventListener("fetch", (e) => {'),
+    writeln('  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));'),
+    writeln('});').
+
+escribir_cabecera_html :-
+    writeln('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'),
+    writeln('<meta name="viewport" content="width=device-width, initial-scale=1.0">'),
+    writeln('<title>Mi Horario</title>'),
+    writeln('<link rel="manifest" href="manifest.json">'),
+    writeln('<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js");}</script>'),
+    writeln('<meta name="theme-color" content="#1a73e8">'),
+    writeln('<style>'),
+    writeln('body { font-family: "Segoe UI", Arial, sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }'),
+    writeln('.container { max-width: 100%; margin: 0 auto; padding-top: 10px; }'),
+    writeln('h1 { text-align: center; color: #1a73e8; margin-bottom: 20px; font-size: 1.8em; }'),
+    writeln('.dia { font-size: 1.2em; color: #5f6368; margin-top: 25px; border-bottom: 2px solid #dadce0; padding-bottom: 5px; font-weight: bold; }'),
+    writeln('.item { background: #fff; padding: 15px; margin: 12px 0; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 6px solid #34a853; display: flex; flex-direction: column;}'),
+    writeln('.tiempo { font-weight: bold; color: #1a73e8; font-size: 1.1em; margin-bottom: 6px; }'),
+    writeln('.tarea { font-size: 1.1em; }'),
+    writeln('.adv { background: #fce8e6; border-left: 6px solid #ea4335; padding: 15px; margin: 12px 0; border-radius: 12px; color: #c5221f; font-weight: bold; }'),
+    writeln('</style></head><body><div class="container"><h1>📅 Mi Horario</h1>').
+
+escribir_pie_html :-
+    writeln('</div></body></html>').
+
+escribir_agenda_html([], _).
+escribir_agenda_html([asignado(Nom, Fecha, MinIni, MinFin) | T], DiaAnterior) :-
+    ( Fecha \== DiaAnterior -> format('<div class="dia">Fecha: ~w</div>~n', [Fecha]) ; true ),
+    minutos_a_hhmm(MinIni, H1), minutos_a_hhmm(MinFin, H2),
+    format('<div class="item"><span class="tiempo">⏰ ~w - ~w</span><span class="tarea">~w</span></div>~n', [H1, H2, Nom]),
+    escribir_agenda_html(T, Fecha).
+
+escribir_advertencias_html([]).
+escribir_advertencias_html([Adv | T]) :-
+    format('<div class="adv">⚠️ ~w</div>~n', [Adv]),
+    escribir_advertencias_html(T).
