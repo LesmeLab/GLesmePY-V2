@@ -1,9 +1,9 @@
 
 //import Iterator,Iterable,Random, Scanner;
-public class BufferGap<E>{
+public class BufferGap<E> implements Iterable{
 	//datos Internos
 	private final int TAM_INICIAL = 16;
-	private E[] datos;
+	private E[] datos;//Arreglo estatico de tipo E inicialmente de tamanho TAM_INICIAL  = 16
 	private int inicioHueco;
 	private int finHueco;
 	private long desplazamientos;
@@ -16,15 +16,44 @@ public class BufferGap<E>{
 	}
 	
 	public void insertar(E obj){
-		//?
+		if (inicioHueco < finHueco){
+			datos[inicioHueco]=obj;
+			inicioHueco++;
+		}
+		
+		
+		
+		if (finHueco-inicioHueco > 0){
+			datos[inicioHueco]=obj;
+			inicioHueco++;
+		}
+		
+		//hueco agotado?
+		if (finHueco == datos.length){
+			if (finHueco == inicioHueco){
+				E[] datosAnt = datos;
+				datos = new E<>[datosAnt.length*2];
+			}
+			
+			//for each para copiar los datos
+		}else if (){
+			
+		}
 	}
 	
 	public E borrar(){
-		//
+		
 	}
 	
 	public void moverCursor(int delta){
-		//?
+		if (delta == 0){
+			break;
+		}
+		//derecha
+		if (inicioHueco+delta>=datos.length && delta>0){
+			
+		}
+		
 	}
 	
 	public int posicionCursor(){
