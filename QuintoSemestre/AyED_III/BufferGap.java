@@ -19,6 +19,28 @@ public class BufferGap<E> implements Iterable{
 		if (inicioHueco < finHueco){
 			datos[inicioHueco]=obj;
 			inicioHueco++;
+		}else if (inicioHueco == finHueco){
+			if (finHueco == datos.length){
+				E[] datosAnt = datos;
+				datos = new E[datos.length];
+				finHueco = datos.length;
+				
+				//funcion for-each para copiar solo valores validos <AQUI>
+				
+				datos[inicioHueco] = obj;
+				inicioHueco;
+			}else{
+				E[] datosAnt = datos;
+				datos = new E[datos.length];
+				
+				//funcion for-each para copiar solo valores validos, y que respete el hueco
+				//idea: que haga desde la izq y luego a la derecha --> hueco <---
+				
+				datos[inicioHueco] = obj;
+				inicioHueco++;
+				
+				//finHueco se queda a la misma distancia de datos.length que antes de agrandar (con el valor nuevo)
+			}
 		}
 		
 		
